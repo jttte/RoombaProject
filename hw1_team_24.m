@@ -14,26 +14,45 @@ function hw1_team_24(serPort)
 % Input:
 % serPort - Serial port object, used for communicating over bluetooth
 %
-% Note: Because the wall sensor on our iCreate is highly unstable,
-% we only depend on bump sensor to trace obstacle.
+% ReadMe: Because the wall sensor on our iCreate is highly unstable,
+% we only depend on bump sensor to trace the obstacle.
+% If you wish to run the iCreate Robot, type in:
+%    >> serPort = RoombaInit_mac ('ElementSerial-ElementSe');
+%    >> hw1_team_24(serPort);
 
-    %constants
+    % constants
     global found_obstacle;
     global start_velocity;
+    global loop_pause_time;
+    global is_simulation;
+    p = properties(serPort);
+    if size(p,1) == 0
+        is_simulation = true;
+        display('running simulation');
+    else
+        is_simulation = false;
+        display('running on iCreate Robot');
+    end
     init();
+    pause(1);
     
     % Start moving ahead until bumping into obstacle
     while ~found_obstacle
         SetFwdVelAngVelCreate(serPort, start_velocity, 0.0)
-        display('moving')
         pause(0.01)
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
         BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
-        found_obstacle= BumpRight || BumpLeft || BumpFront;
+        if(isnan(BumpRight) || isnan(BumpLeft) || isnan(BumpFront))
+            display('bad connection (getting broken signal)');
+            display('    we recommand you to abort the program');
+        else
+            found_obstacle= BumpRight || BumpLeft || BumpFront;
+        end
     end
+    display('found obstacle!')
     % set start position
-    DistanceSensorRoomba (serPort);
-    AngleSensorRoomba (serPort);
+    DistanceSensorRoomba(serPort);
+    AngleSensorRoomba(serPort);
    
     % Enter main loop
     while true
@@ -50,7 +69,7 @@ function hw1_team_24(serPort)
        
         % always turn left to circle around the obstacle
         if BumpFront||BumpLeft
-            while 1
+            while true
                 [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
                 BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
                 bumped = BumpFront||BumpLeft||BumpRight;
@@ -59,7 +78,7 @@ function hw1_team_24(serPort)
                 end
                 SetFwdVelAngVelCreate(serPort,0,0.3);
                 display('bumped front or left')
-                pause(0.01)
+                pause(loop_pause_time)
             end 
 
         elseif BumpRight
@@ -72,7 +91,7 @@ function hw1_team_24(serPort)
 
         end
         update_status (serPort);
-        pause(0.01)
+        pause(loop_pause_time)
     end  
     
     % Stop robot motion
@@ -89,6 +108,8 @@ function init()
     global total_angle;
     global total_dist;
     global start_velocity;
+    global is_simulation;
+    global loop_pause_time;
     
     found_obstacle = false;
     total_dist     = 0;
@@ -98,34 +119,41 @@ function init()
     angle_left     = 30;
     angle_right    = -15;
     start_velocity = 0.25;
+    
+    if is_simulation
+        loop_pause_time = 0.1;
+    else
+        loop_pause_time = 0.01;
+    end
+        
 
 end
 
 % update current position
-function update_status (serPort)
+function update_status(serPort)
 
     global total_x_dist;
     global total_y_dist;
     global total_angle;
     global total_dist;
 
-    dist = DistanceSensorRoomba (serPort);
-    angle = AngleSensorRoomba (serPort);
+    dist = DistanceSensorRoomba(serPort);
+    angle = AngleSensorRoomba(serPort);
 
     total_dist = total_dist + dist;
     total_angle = total_angle + angle;
-    total_x_dist = total_x_dist + dist * cos (total_angle);
-    total_y_dist = total_y_dist + dist * sin (total_angle);
+    total_x_dist = total_x_dist + dist * cos(total_angle);
+    total_y_dist = total_y_dist + dist * sin(total_angle);
 end
 
 % check if robot is back to the start point
-function isDone= checkLocation ()
+function isDone = checkLocation()
 
     global total_x_dist;
     global total_y_dist;
     global total_dist;
 
-    radius = sqrt (total_x_dist^2 + total_y_dist^2);
+    radius = sqrt(total_x_dist^2 + total_y_dist^2);
 
     display (sprintf ('current radius = %f', radius));
     display (sprintf ('current total_dist = %f', total_dist));
