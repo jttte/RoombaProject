@@ -45,7 +45,7 @@ function hw2_team_24(serPort)
     % Start moving straight forward
     % main loop
     while true
-%         display('=================loop===================')       
+        display('=================loop===================')       
 
         if reached_goal || checkLocation()
             display('reached goal - stop!');
@@ -87,18 +87,15 @@ function hw2_team_24(serPort)
             
         else % did not bump into any obstacle, keep moving forward
             SetFwdVelRadiusRoomba(serPort, move_speed, Inf);
-%             display ('moving forward');          
+            display ('moving forward');          
         end
-                
-%         if (abs(total_y_dist) > 0.15)
-%             reorient(serPort)
-%         end
-        
+
         update_status(serPort);
         pause(loop_pause_time);
     end % end of main loop
     
     if (abs(total_y_dist) > 0.15)
+        display('reposition!');
         reorient(serPort)
     end
 
@@ -228,7 +225,7 @@ function trace_boundary(serPort)
                 
                 if (success)
                     % keep going
-                    SetFwdVelAngVelCreate (serPort, move_speed, Inf);
+%                     SetFwdVelAngVelCreate (serPort, move_speed, Inf);
                     status = 2;                  
                     return;
                 end
@@ -257,7 +254,8 @@ function success = try_leave_obstacle(serPort)
 
     SetFwdVelAngVelCreate (serPort, 0.0, 0);
     turnAngle (serPort, 0.2, turnDeg);
-    pause(5)
+    update_status (serPort);
+    pause(3)
 
     % try moving
     bumped_obstacle = false;
@@ -290,11 +288,12 @@ function success = try_leave_obstacle(serPort)
 %         travelDist (serPort, move_speed, 0.15); % get out of 'mline zone'
 %         pause(1);
 %         update_status (serPort);
+        update_status (serPort);
         success = false;
         return;
     else
         display('leaving obstacle successfully');
-%         update_status(serPort);
+        update_status(serPort);
     end
     
     
@@ -327,7 +326,8 @@ function update_status(serPort)
     global travel_dist_after_bump;
     
     dist = DistanceSensorRoomba(serPort);
-    angle = AngleSensorRoomba(serPort);   
+    angle = AngleSensorRoomba(serPort);
+    display(angle);
   
     total_dist = total_dist + dist;
     total_angle = total_angle + angle;
@@ -358,13 +358,14 @@ function isDone = checkLocation()
     global total_y_dist;
     global dist_to_goal;
 
-    radius = sqrt((total_x_dist - dist_to_goal)^2 + total_y_dist^2);
+%     radius = sqrt((total_x_dist - dist_to_goal)^2 + total_y_dist^2);
+    radius = abs(total_x_dist - dist_to_goal);
 
 %     display (sprintf ('current radius = %f', radius));
 %     display (sprintf ('current x dist = %f', total_x_dist));
 %     display (sprintf ('current y dist = %f', total_y_dist));
 
-    if (radius < 0.2)
+    if (radius < 0.15)
         isDone = true;
         display (sprintf ('current y dist = %f', total_y_dist));
         display (sprintf ('current x dist = %f', total_x_dist));
@@ -444,7 +445,7 @@ function reorient (serPort)
     
     travelDist (serPort, move_speed/2, delta_y);
     % plot the gap (not plotted in update_status)
-    y = linspace(total_y_dist,total_y_dist + delta_y * angle * (-1) / 90.0, 10);
+    y = linspace(total_y_dist,total_y_dist + delta_y * angle / 90.0, 10);
     x = ones(1, 10) * total_x_dist;
     global fig_plotter;
     
