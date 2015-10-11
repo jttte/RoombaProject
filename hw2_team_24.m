@@ -90,13 +90,19 @@ function hw2_team_24(serPort)
 %             display ('moving forward');          
         end
                 
-        if (abs(total_y_dist) > 0.15)
-            reorient(serPort)
-        end
+%         if (abs(total_y_dist) > 0.15)
+%             reorient(serPort)
+%         end
         
         update_status(serPort);
         pause(loop_pause_time);
     end % end of main loop
+    
+    if (abs(total_y_dist) > 0.15)
+        reorient(serPort)
+    end
+
+    update_status(serPort);
     
     % Stop robot motion
     SetFwdVelAngVelCreate(serPort, 0, 0);
@@ -120,7 +126,7 @@ function init()
     global travel_dist_after_bump;
     global status;
     
-    dist_to_goal   = 2.0;
+    dist_to_goal   = 3.0;
     total_dist     = 0;
     total_x_dist   = 0.0;
     total_y_dist   = 0.0;
@@ -217,8 +223,9 @@ function trace_boundary(serPort)
             
             if is_closer_to_goal()
                 travel_dist_after_bump = 0;
+                display('is closer to goal - now try to leave obstacle');
                 success = try_leave_obstacle(serPort); 
-                display('is closer to goal');
+                
                 if (success)
                     % keep going
                     SetFwdVelAngVelCreate (serPort, move_speed, Inf);
@@ -287,7 +294,7 @@ function success = try_leave_obstacle(serPort)
         return;
     else
         display('leaving obstacle successfully');
-        update_status(serPort);
+%         update_status(serPort);
     end
     
     
@@ -357,7 +364,7 @@ function isDone = checkLocation()
 %     display (sprintf ('current x dist = %f', total_x_dist));
 %     display (sprintf ('current y dist = %f', total_y_dist));
 
-    if (radius < 0.15)
+    if (radius < 0.2)
         isDone = true;
         display (sprintf ('current y dist = %f', total_y_dist));
         display (sprintf ('current x dist = %f', total_x_dist));
