@@ -123,7 +123,7 @@ function init()
     global travel_dist_after_bump;
     global status;
     
-    dist_to_goal   = 3.0;
+    dist_to_goal   = 2.0;
     total_dist     = 0;
     total_x_dist   = 0.0;
     total_y_dist   = 0.0;
@@ -245,17 +245,33 @@ function success = try_leave_obstacle(serPort)
     display('try to leave obstable')
     
     success = true;
+    stop_degree = total_angle * 180 / pi;
+        
     if (total_x_dist > dist_to_goal)
         % at the other side
-        turnDeg = total_angle * 180.0 / pi;
+        while (abs((total_angle-pi)*180/pi)>1)
+            turnAngle (serPort, 0.2, 1);
+            update_status (serPort);
+            display('turning')
+            
+        end
     else
-        turnDeg = total_angle * (-1) * 180.0 / pi;
+        while (abs(total_angle*180/pi)>1)
+            turnAngle (serPort, 0.2, 1);
+            update_status (serPort);
+            display('turning')
+        end
     end
 
-    SetFwdVelAngVelCreate (serPort, 0.0, 0);
-    turnAngle (serPort, 0.2, turnDeg);
-    update_status (serPort);
-    pause(3)
+    
+%     tmp_angle = total_angle * 180.0 / pi;
+%     if (abs(tmp_angle) > 2)
+%         display('fine tuning angle!')
+%         turnDeg = -tmp_angle;
+%         turnAngle (serPort, 0.1, turnDeg);
+%         update_status (serPort);
+%     end
+%     pause(0.5)
 
     % try moving
     bumped_obstacle = false;
@@ -283,11 +299,9 @@ function success = try_leave_obstacle(serPort)
 
         % back off for a little bit
         travelDist (serPort, 0.025, -0.01);
-        turnAngle (serPort, 0.2, -turnDeg);
-        pause(1);
-%         travelDist (serPort, move_speed, 0.15); % get out of 'mline zone'
+%         turnAngle (serPort, 0.2, stop_degree - (total_angle * 180 /pi));
 %         pause(1);
-%         update_status (serPort);
+
         update_status (serPort);
         success = false;
         return;
@@ -327,10 +341,10 @@ function update_status(serPort)
     
     dist = DistanceSensorRoomba(serPort);
     angle = AngleSensorRoomba(serPort);
-    display(angle);
   
     total_dist = total_dist + dist;
-    total_angle = total_angle + angle;
+    total_angle = mod(total_angle + angle,2*pi);
+    display(total_angle);
     
     x = dist * cos (total_angle);
     y = dist * sin (total_angle);
