@@ -225,7 +225,6 @@ function trace_boundary(serPort)
                 
                 if (success)
                     % keep going
-%                     SetFwdVelAngVelCreate (serPort, move_speed, Inf);
                     status = 2;                  
                     return;
                 end
@@ -245,7 +244,6 @@ function success = try_leave_obstacle(serPort)
     display('try to leave obstable')
     
     success = true;
-    stop_degree = total_angle * 180 / pi;
         
     if (total_x_dist > dist_to_goal)
         % at the other side
@@ -263,22 +261,12 @@ function success = try_leave_obstacle(serPort)
         end
     end
 
-    
-%     tmp_angle = total_angle * 180.0 / pi;
-%     if (abs(tmp_angle) > 2)
-%         display('fine tuning angle!')
-%         turnDeg = -tmp_angle;
-%         turnAngle (serPort, 0.1, turnDeg);
-%         update_status (serPort);
-%     end
-%     pause(0.5)
-
     % try moving
     bumped_obstacle = false;
     N = 0;
     % try move foward for 10 runs
     while ~bumped_obstacle && N < 10
-%         SetFwdVelAngVelCreate (serPort, move_speed, 0); 
+        % try slightly moving forward
         travelDist (serPort, move_speed, 0.01);
 
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
@@ -299,8 +287,6 @@ function success = try_leave_obstacle(serPort)
 
         % back off for a little bit
         travelDist (serPort, 0.025, -0.01);
-%         turnAngle (serPort, 0.2, stop_degree - (total_angle * 180 /pi));
-%         pause(1);
 
         update_status (serPort);
         success = false;
