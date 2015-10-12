@@ -248,14 +248,14 @@ function success = try_leave_obstacle(serPort)
     if (total_x_dist > dist_to_goal)
         % at the other side
         while (abs((total_angle-pi)*180/pi)>1)
-            turnAngle (serPort, 0.2, 1);
+            turnAngle (serPort, 0.2, (pi - total_angle)*180/pi);
             update_status (serPort);
             display('turning')
             
         end
     else
         while (abs(total_angle*180/pi)>1)
-            turnAngle (serPort, 0.2, 1);
+            turnAngle (serPort, 0.2, (-1)*total_angle*180/pi);
             update_status (serPort);
             display('turning')
         end
@@ -329,7 +329,12 @@ function update_status(serPort)
     angle = AngleSensorRoomba(serPort);
   
     total_dist = total_dist + dist;
-    total_angle = mod(total_angle + angle,2*pi);
+    total_angle = total_angle + angle,2*pi;
+    if total_angle >= 2*pi
+        total_angle = total_angle-2*pi
+    elseif total_angle<0
+        total_angle = total_angle +2*pi
+    end
     display(total_angle);
     
     x = dist * cos (total_angle);
