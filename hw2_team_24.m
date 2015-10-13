@@ -14,7 +14,7 @@ function hw2_team_24(serPort)
 % Input:
 % serPort - Serial port object, used for communicating over bluetooth
 %
-% ReadMe: Please use cable to connect to the robot!
+% ReadMe: Please use cable to connect to the robot!!!
 % If you wish to run the iCreate Robot, type in:
 %    >> serPort = RoombaInit_mac ('usbserial');
 %    >> hw1_team_24(serPort);
@@ -22,7 +22,6 @@ function hw2_team_24(serPort)
     % constants
     global bumped_obstacle;
     global loop_pause_time;
-    global is_simulation;
     global bumped_dist_x; % coordinate x when first bumping into obstacle qi
     global bumped_dist_y; % coordinate y when first bumping into obstacle qi
     global total_x_dist;  % current coordinate x
@@ -33,7 +32,6 @@ function hw2_team_24(serPort)
     global travel_dist_after_bump;
     global status;
 
-    is_simulation = true;
     init();
     init_plot();
     pause(1);
@@ -114,7 +112,6 @@ function init()
     global total_y_dist;
     global total_angle;
     global total_dist;
-    global is_simulation;
     global loop_pause_time;
     global dist_to_goal;
     global reached_goal;
@@ -123,7 +120,7 @@ function init()
     global travel_dist_after_bump;
     global status;
     
-    dist_to_goal   = 2.0;
+    dist_to_goal   = 4.0; % distance to the target
     total_dist     = 0;
     total_x_dist   = 0.0;
     total_y_dist   = 0.0;
@@ -136,14 +133,8 @@ function init()
     travel_dist_after_bump = 0.0;
     status = 0;
     
-    if is_simulation
-        loop_pause_time = 0.1;
-        move_speed      = 0.05;
-    else
-        loop_pause_time = 0.01;
-        move_speed      = 0.03;
-    end
-        
+    loop_pause_time = 0.1;
+    move_speed      = 0.05;
 
 end
 
@@ -244,18 +235,24 @@ function success = try_leave_obstacle(serPort)
     display('try to leave obstable')
     
     success = true;
-        
+    
+    alpha = 0.6; % the arbitrary parameter we set to compensate the 
+                 % 'over-turning' by the physical machine
     if (total_x_dist > dist_to_goal)
-        % at the other side
-        while (abs((total_angle-pi)*180/pi)>1)
-            turnAngle (serPort, 0.2, (pi - total_angle)*180/pi);
+        % at the other side, need to turn back, turn to 180 degree
+        % -2*pi < total_angle < 2*pi
+        while (abs(abs(total_angle)- pi ) * 180 / pi > 2)
+            if total_angle < -pi || (total_angle < pi && total_angle > 0)
+                turnAngle (serPort, 0.2, abs(pi - abs(total_angle)) * 180 * alpha / pi);
+            else
+                turnAngle (serPort, 0.2, (-1) * abs(pi - abs(total_angle)) * 180 * alpha / pi);
+            end
             update_status (serPort);
-            display('turning')
-            
+            display('turning')            
         end
     else
-        while (abs(total_angle*180/pi)>1)
-            turnAngle (serPort, 0.2, (-1)*total_angle*180/pi);
+        while (abs(total_angle) * 180 / pi > 2) % turn to 0 degree
+            turnAngle (serPort, 0.2, (-1)* total_angle * 180 * alpha / pi);
             update_status (serPort);
             display('turning')
         end
@@ -329,11 +326,13 @@ function update_status(serPort)
     angle = AngleSensorRoomba(serPort);
   
     total_dist = total_dist + dist;
-    total_angle = total_angle + angle,2*pi;
+    total_angle = total_angle + angle;
+    
+    % keep total_angle between -2*pi and 2*pi
     if total_angle >= 2*pi
-        total_angle = total_angle-2*pi
-    elseif total_angle<0
-        total_angle = total_angle +2*pi
+        total_angle = total_angle - 2*pi;
+    elseif total_angle < -2*pi
+        total_angle = total_angle + 2*pi;
     end
     display(total_angle);
     
@@ -363,12 +362,9 @@ function isDone = checkLocation()
     global total_y_dist;
     global dist_to_goal;
 
-%     radius = sqrt((total_x_dist - dist_to_goal)^2 + total_y_dist^2);
-    radius = abs(total_x_dist - dist_to_goal);
-
-%     display (sprintf ('current radius = %f', radius));
-%     display (sprintf ('current x dist = %f', total_x_dist));
-%     display (sprintf ('current y dist = %f', total_y_dist));
+    % this function is called only when robot is in m-line
+    % so let's not let error in y-direction distract us
+    radius = abs(total_x_dist - dist_to_goal); 
 
     if (radius < 0.15)
         isDone = true;
@@ -402,16 +398,15 @@ function in_mline = is_in_mline()
 
     display (sprintf ('current total_y_dist = %f', total_y_dist));
 
-    if (abs(total_y_dist) < 0.15)
+    if (abs(total_y_dist) < 0.1)
         in_mline = true;
     else
         in_mline = false;
     end
 end
 
-% it is almost impossible to move in straight line!
-% this function is for fine tuning position 
-% (only called when not tracing boundary)
+% this function is for fine tuning y position 
+% now only called after reaching target
 function reorient (serPort)
     
     global total_x_dist;
@@ -426,7 +421,7 @@ function reorient (serPort)
     delta_x = dist_to_goal - total_x_dist;
     delta_y = total_y_dist;
     
-    checkLocation();
+%     checkLocation();
     
     display (sprintf ('re-orienting... x = %f, delta_x = %f', total_x_dist, delta_x));
     SetFwdVelRadiusRoomba(serPort, 0, 0);
@@ -434,7 +429,7 @@ function reorient (serPort)
     pause(1);
     update_status(serPort);
     
-    checkLocation();
+%     checkLocation();
     
     % re-orient to 90
     display (sprintf ('re-positioning... y = %f, delta_y = %f', total_y_dist, delta_y));
