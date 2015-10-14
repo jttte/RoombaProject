@@ -18,6 +18,11 @@ function hw2_team_24(serPort)
 % If you wish to run the iCreate Robot, type in:
 %    >> serPort = RoombaInit_mac ('usbserial');
 %    >> hw1_team_24(serPort);
+% The position of robot is indicated by a blue circle. The smaller red circle
+% near the blue circle indicated the direction the robot is facing at the 
+% moment. The plot updates very frequent so it might be hard to see the red
+% circle clearly when running, but you can enlarge the plot to examine it
+% afterwards.
 
     % constants
     global bumped_obstacle;
@@ -142,7 +147,8 @@ function init_plot()
     
     global fig_plotter;
     
-    fig_plotter = figure; 
+    fig_plotter = figure;
+    axis equal;
     xlabel ('Position in X-axis (m)');
     ylabel ('Position in Y-axis (m)');
     title  ('Position of iRobot');
@@ -350,7 +356,11 @@ function update_status(serPort)
     ylabel ('Position in Y-axis (m)');
     title  ('Position of iRobot');
     figure (fig_plotter);
-    plot (total_x_dist, total_y_dist, 'x');
+    plot (total_x_dist, total_y_dist, 'o', 'MarkerEdgeColor','b', 'MarkerSize', 9);
+    dir_x = 0.001 * cos (total_angle);
+    dir_y = 0.001 * sin (total_angle);
+    plot (total_x_dist + dir_x, total_y_dist + dir_y, 'o', 'MarkerEdgeColor','r', 'MarkerSize', 4);
+    axis equal
     hold on;
 
 end
