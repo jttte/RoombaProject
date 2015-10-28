@@ -1,4 +1,4 @@
-function  Scan()
+function  Scan(serPort)
     global Map;
     global cur_locat;
     init();
@@ -15,12 +15,12 @@ function  Scan()
             current = goal;
             goal = next(current);
         end
-        display(goal)
+        move(serPort,cur_locat,goal);
         cur_locat = goal;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
         Map(cur_locat(1),cur_locat(2)) = 1;
         Map_plot();
-        pause(0.2);
+%        pause(0.2);
     end
 end
 function init()
@@ -28,6 +28,8 @@ function init()
     global cur_locat;
     global start_locat;
     global Map_size;
+    global current_angle;
+    current_angle = 0;
     Map_size = [11,11];     % The last row/column is not used in colormap
     start_locat = [5,5];
     cur_locat = start_locat;
@@ -77,4 +79,21 @@ function status = valid(locat)
     elseif Map(locat(1),locat(2))==0.5
         status = 0;
     end
+end
+function move(serPort,current,goal)
+    global current_angle;
+    if goal(2)<=current(2)
+        theta = acos(dot(goal-current,[1,0])/norm(goal-current))-current_angle;
+        turnAngle (serPort, 0.4, 180*theta/pi);
+%        display(180*theta/pi)
+        current_angle = acos(dot(goal-current,[1,0])/norm(goal-current));
+    else
+        theta = acos(dot(goal-current,[1,0])/norm(goal-current))+current_angle;
+        turnAngle (serPort, 0.4, -180*theta/pi);
+        display(180*theta/pi)
+        current_angle = -acos(dot(goal-current,[1,0])/norm(goal-current));
+    end
+    travelDist (serPort, 0.4, norm(goal-current)*0.3);      % The parameter may need to change.
+    display(current_angle);
+    pause(0.2);
 end
