@@ -3,9 +3,12 @@ function  Scan(serPort)
     global cur_locat;
     global total_x_dist;
     global total_y_dist;
+    global status_vacant;
+    global trace_flag;
     init();
     update(serPort);
     while(1)
+        trace_flag = 0;
         % Whether the Map is searched completely
         display(cur_locat);
         if ~ismember(0,Map)
@@ -20,13 +23,34 @@ function  Scan(serPort)
             goal = next(current);
         end
         distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1));
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %   BUG 2(serPort,distance)
-        travelDist (serPort, 0.4, distance);
-        update(serPort);
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        while norm([total_x_dist,total_y_dist]-transf(cur_locat,1)) < distance
+            [BumpRight,BumpLeft,WheDropRight,WheDropLeft,WheDropCaster,BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+            sensor = BumpFront||BumpLeft||BumpRight||WallSensorReadRoomba (serPort);
+            SetFwdVelRadiusRoomba(serPort, 0.1, inf);
+            update(serPort);
+            if sensor
+                trace_flag = 1;
+                break;               
+            end
+        end
+        SetFwdVelRadiusRoomba(serPort, 0, inf);         % Stop!
+        if trace_flag
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %   TRACE
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            current = cur_locat;
+            goal = next(current);
+            while ~valid(goal)
+                current = goal;
+                goal = next(current);
+            end
+            distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1)); 
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %   BUG 2(serPort,distance)
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        end
         cur_locat = goal;
-        Map(cur_locat(1),cur_locat(2)) = 1;
+        Map(cur_locat(1),cur_locat(2)) = status_vacant;
         Map_plot();
         pause(0.2);
     end
@@ -44,12 +68,14 @@ function init()
     global status_obstacle;     % = 0.5
     global status_vacant;       % = 1
     global turn_speed;
+    global trace_flag;          % whether BUG algorithm need to be implemented
 
     para = 0.3;
     status_unexplored = 0;
     status_obstacle = 0.5;
     status_vacant = 1;
     turn_speed = 0.2;
+    trace_flag = 0;
     
     total_x_dist = 0;
     total_y_dist = 0;
