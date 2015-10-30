@@ -582,7 +582,7 @@ function bug2_trace_boundary(serPort)
         update_bug2 (serPort);
 
         % check break loop conditions
-        if is_in_mline() && travel_dist_after_bump > 0.5
+        if is_in_mline() && travel_dist_after_bump > 0.3
             display(travel_dist_after_bump);
             display('back to mline');
             
