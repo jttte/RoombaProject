@@ -370,7 +370,8 @@ function fill_blocks(tmp_boundary_map)
     test_filled_map = imfill(test_map,'hole');
     if test_filled_map (start_locat(1), start_locat(2)) == 1
         display('we just traced the wall!');
-        Map_wall = - tmp_boundary_map;
+        tmp_outside_map = ~test_filled_map;
+        Map_wall = - tmp_boundary_map - tmp_outside_map * status_obstacle;
     end
     
     boundary_map = (Map + Map_wall) == status_obstacle; 
