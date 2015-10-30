@@ -336,7 +336,9 @@ function isDone = CheckBack(x,y)
     global total_y_dist;
     global total_dist;
     radius = norm([total_x_dist-x,total_y_dist-y]);
-    if (total_dist > 1 && radius < 0.3)
+    disp([x, y]);
+    disp([total_x_dist, total_y_dist]);
+    if (total_dist > 1 && radius < 0.2)
         isDone = true;
     else
         isDone = false;
@@ -375,7 +377,7 @@ function fill_blocks(tmp_boundary_map)
     % only obstacle points stay in boundary_map
     filled_map = imfill(boundary_map,'hole');
     
-    Map = (filled_map - Map_wall)*status_obstacle + (Map == status_vacant) * status_vacant;
+    Map = (filled_map)*status_obstacle - Map_wall + (Map == status_vacant) * status_vacant;
 end
 
 function map = update_current_map(map)
