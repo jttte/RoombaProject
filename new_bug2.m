@@ -6,6 +6,8 @@ function  Scan(serPort)
     global status_vacant;
     global trace_flag;
     global move_speed;
+    global status_obstacle;
+    
     init();
     init_map();
 %     update(serPort);
@@ -38,10 +40,13 @@ function  Scan(serPort)
                 break;               
             end
         end
-%         SetFwdVelRadiusRoomba(serPort, 0, Inf);         % Stop!
+        SetFwdVelRadiusRoomba(serPort, 0, 0);         % Stop!
         if trace_flag
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            trace_boundary(serPort);
+            position = [total_x_dist, total_y_dist];
+            if Map(transf(position, 0)) ~= status_obstacle         
+                trace_boundary(serPort);
+            end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             current = cur_locat;
             goal = next(current);
@@ -93,8 +98,8 @@ function init()
     start_locat = [15,15];
     cur_locat = start_locat;
     Map = zeros(Map_size(1),Map_size(2));
-    Map_wall = zeros(Map_size(1),Map_size(2));
-    Map(end,:)=status_obstacle; Map(:,end) = status_obstacle;
+    Map_wall = Map;
+%     Map(end,:)=status_obstacle; Map(:,end) = status_obstacle;
     Map(start_locat(1),start_locat(2)) = status_vacant;
 
 end
@@ -281,12 +286,12 @@ function trace_boundary(serPort)
     end % end of tracing boundary loop
     
     % Stop robot motion
-    SetFwdVelAngVelCreate(serPort, 0, Inf);
+    SetFwdVelAngVelCreate(serPort, 0, 0);
     
     annotate_Map(status_obstacle);
 %     tmp_boundary_map = fill_blocks(tmp_boundary_map);
 %     Map = Map.*(tmp_boundary_map==0)+tmp_boundary_map;
-    fill_blocks();
+    fill_blocks(tmp_boundary_map);
     Map_plot();
 end
 
@@ -338,7 +343,7 @@ function isDone = CheckBack(x,y)
     end
 end
 
-function fill_blocks()
+function fill_blocks(tmp_boundary_map)
 %     global start_locat;
 %     global status_obstacle;
 %  
@@ -353,7 +358,6 @@ function fill_blocks()
 %         map = mapfill+map;
 %     end   
 
-    global tmp_boundary_map;
     global Map;
     global Map_wall;
     global status_obstacle;
@@ -496,7 +500,7 @@ function Bug2(serPort, goal)
     update_bug2(serPort);
     
     % Stop robot motion
-    SetFwdVelAngVelCreate(serPort, 0, Inf);
+    SetFwdVelAngVelCreate(serPort, 0, 0);
 end
 
 % initialize constants
