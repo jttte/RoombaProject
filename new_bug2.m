@@ -80,6 +80,8 @@ function  Scan(serPort)
             end
             display(goal);
             distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1)); 
+            display('re-align!')
+            display(goal);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             Bug2(serPort, distance);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -87,10 +89,13 @@ function  Scan(serPort)
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         position = [total_x_dist, total_y_dist];
-        position = transf(position, 0);
-        if position ~= goal
+        position_d = transf(position, 0);
+        display('CHeck')
+        display(position)
+        display('goal')
+        if position_d(1) ~= goal(1) || position_d(2) ~= goal(2)
             distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1));
-            while norm([total_x_dist,total_y_dist] - transf(position,1)) < distance
+            while norm([total_x_dist,total_y_dist] - position) < distance
                 disp('fine tuning position');
                 SetFwdVelRadiusRoomba(serPort, move_speed, Inf);
                 update(serPort);
@@ -161,7 +166,7 @@ function Map_plot()
 %     display(Map);
     figure (figHandle);
     
-    save Map;
+%    save Map;
     m = max(Map);
     if(m(1) > 1)
         purge_Map = Map > 1;
@@ -217,25 +222,50 @@ function dist = align(serPort,current,goal)
     display(goal)
     
     if goal(2)>current(2)
-        error = angleT(total_angle)-acos(dot(goal-current,[1,0])/norm(goal-current));
-        while (abs(error)>0.04)
-             turnAngle (serPort, turn_speed, -0.1*sign(error));
-             update(serPort);
-             error = angleT(total_angle)-acos(dot(goal-current,[1,0])/norm(goal-current));
-             display(error)
-             display(total_angle)
-        end
+        if(goal(1)-current(1)>0.15)
+            error = angleT(total_angle)-acos(dot(goal-current,[1,0])/norm(goal-current));
+             while (abs(error)>0.04)
+                 display('case1')
+                turnAngle (serPort, turn_speed, -0.1*sign(error));
+                update(serPort);
+                error = angleT(total_angle)-acos(dot(goal-current,[1,0])/norm(goal-current));
+                display(error)
+                display(total_angle);
+             end
+        else
+            error = mod(total_angle,2*pi)-acos(dot(goal-current,[1,0])/norm(goal-current));
+            while (abs(error)>0.04)
+                display('case2')
+                turnAngle (serPort, turn_speed, -0.1*sign(error));
+                update(serPort);
+                error = mod(total_angle,2*pi)-acos(dot(goal-current,[1,0])/norm(goal-current));
+                display(error)
+                display(total_angle);
+             end
+        end    
     else
-        error = mod(total_angle,-2*pi)+acos(dot(goal-current,[1,0])/norm(goal-current));
-        while (abs(error)>0.04)
-             turnAngle (serPort, turn_speed, -0.1*sign(error));
-             update(serPort);
-             error = mod(total_angle,-2*pi)+acos(dot(goal-current,[1,0])/norm(goal-current));
-             display(error)
-             display(total_angle)
+        if(goal(1)-current(1)>0.15)
+            error = angleT(total_angle)+acos(dot(goal-current,[1,0])/norm(goal-current));
+             while (abs(error)>0.04)
+                 display('case3')
+                turnAngle (serPort, turn_speed, -0.1*sign(error));
+                update(serPort);
+                error = angleT(total_angle)+acos(dot(goal-current,[1,0])/norm(goal-current));
+                display(error)
+                display(total_angle);
+             end
+        else
+            error = mod(total_angle,-2*pi)+acos(dot(goal-current,[1,0])/norm(goal-current));
+            while (abs(error)>0.04)
+                display('case4')
+                turnAngle (serPort, turn_speed, -0.1*sign(error));
+                update(serPort);
+                error = mod(total_angle,-2*pi)+acos(dot(goal-current,[1,0])/norm(goal-current));
+                display(error)
+                display(total_angle);
+             end
         end
-    end
-    
+    end    
     dist = norm(goal-current);
 end
 
