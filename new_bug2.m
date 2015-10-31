@@ -64,8 +64,10 @@ function  Scan(serPort)
         cur_locat = goal;
         Map(cur_locat(1),cur_locat(2)) = status_vacant;
         Map_plot();
-        pause(0.2);
+        pause(0.1);
     end
+    SetFwdVelRadiusRoomba(serPort, 0, eps);
+    
 end
 function init()
     global Map;
