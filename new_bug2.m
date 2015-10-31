@@ -9,11 +9,13 @@ function  Scan(serPort)
     global status_obstacle;
     global status_unexplored;
     global loop_pause_time;
+    global Map_size;
     
     init();
     init_map();
+    search_complete = false;
 %     update(serPort);
-    while(1)
+    while(~search_complete)
         trace_flag = 0;
         % Whether the Map is searched completely
         display(cur_locat);
@@ -24,14 +26,22 @@ function  Scan(serPort)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         current = cur_locat;
         goal = next(current);
-
+        
+        max_loop = Map_size(1) * Map_size(2);
         while ~valid(goal)
             current = goal;
             goal = next(current);
+            max_loop = max_loop - 1;
+            if max_loop < 1
+                search_complete = true;
+                display('Search complete!');
+                break;
+            end
         end
+        
         display(goal);
         distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1));
-        while norm([total_x_dist,total_y_dist] - transf(goal,1)) > 0.15
+        while norm([total_x_dist,total_y_dist] - transf(current,1)) < distance
             SetFwdVelRadiusRoomba(serPort, move_speed, Inf);
             [BumpRight,BumpLeft,WheDropRight,WheDropLeft,WheDropCaster,BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
             sensor = BumpFront||BumpLeft||BumpRight||WallSensorReadRoomba (serPort);
@@ -56,9 +66,17 @@ function  Scan(serPort)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             current = cur_locat;
             goal = next(current);
+            
+            max_loop = Map_size(1)*Map_size(2);
             while ~valid(goal)
                 current = goal;
                 goal = next(current);
+                max_loop = max_loop - 1;
+                if max_loop < 1
+                    search_complete = true;
+                    display('Search complete!');
+                    break;
+                end
             end
             display(goal);
             distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1)); 
@@ -67,19 +85,25 @@ function  Scan(serPort)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         position = [total_x_dist, total_y_dist];
         position = transf(position, 0);
         if position ~= goal
+            disp('fine tuning position');
             distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1));
-            while norm([total_x_dist,total_y_dist] - transf(goal,1)) > 0.15
+            while norm([total_x_dist,total_y_dist] - transf(position,1)) < distance
                 SetFwdVelRadiusRoomba(serPort, move_speed, Inf);
                 pause(loop_pause_time);
             end
         end
+        position = [total_x_dist, total_y_dist];
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+%         cur_locat = transf(position, 0);
         cur_locat = goal;
         % Modification
         
-        annotate_Map(status_vacant);
+        annotate_Map(total_x_dist, total_y_dist, status_vacant);
 %         Map(cur_locat(1),cur_locat(2)) = status_vacant;
         Map_plot();
         pause(loop_pause_time);
@@ -167,11 +191,13 @@ function status = valid(locat)
     global Map_size;
     global Map;
     global status_obstacle
+    global status_vacant
+    
     status = 1;
     boundary = double(locat<Map_size) .* double(locat>[0,0]);
     if boundary(1)==0 || boundary(2)==0
         status = 0;
-    elseif Map(locat(1),locat(2))== status_obstacle
+    elseif Map(locat(1),locat(2)) == status_obstacle || Map(locat(1),locat(2)) == status_vacant
         status = 0;
     end
 end
@@ -261,8 +287,10 @@ function trace_boundary(serPort)
     global angle_front;
     global angle_left;
     global status_obstacle;
+    global status_vacant;
     global total_x_dist;
     global total_y_dist;
+    global total_angle;
     global move_speed;
     global loop_pause_time;
     
@@ -318,7 +346,12 @@ function trace_boundary(serPort)
         tmp_boundary_map = update_current_map(tmp_boundary_map);
 %         annotate_Map(status_obstacle);
 %         display(tmp_boundary_map);
-        annotate_Map(status_obstacle);
+        theta = total_angle - pi/2;
+        right_side_x = total_x_dist + cos(theta)*0.15;
+        right_side_y = total_y_dist + sin(theta)*0.15;
+        annotate_Map(total_x_dist, total_y_dist, status_vacant);
+        annotate_Map(right_side_x, right_side_y, status_obstacle);
+        Map_plot();
         Map_plot();
 
         % Briefly pause to avoid continuous loop iteration
@@ -328,9 +361,6 @@ function trace_boundary(serPort)
     % Stop robot motion
     SetFwdVelAngVelCreate(serPort, 0, eps);
     
-    annotate_Map(status_obstacle);
-%     tmp_boundary_map = fill_blocks(tmp_boundary_map);
-%     Map = Map.*(tmp_boundary_map==0)+tmp_boundary_map;
     fill_blocks(tmp_boundary_map);
     Map_plot();
 end
@@ -438,18 +468,20 @@ function map = update_current_map(map)
 % 	Map_plot();
 end
 
-function annotate_Map(status)
+function annotate_Map(x, y, status)
     global Map;
-    global total_x_dist;
-    global total_y_dist;
     global start_locat;
     global status_vacant;
+    global status_unexplored;
     
-    block_xy = transf([total_x_dist, total_y_dist], 0);
+    block_xy = transf([x, y], 0);
     x_idx = block_xy(1);
     y_idx = block_xy(2);
     
-    Map(x_idx, y_idx) = status;
+    % if it's obstacle, don't change it. be conservative
+    if Map(x_idx, y_idx) == status_unexplored || Map(x_idx, y_idx) == status_vacant
+        Map(x_idx, y_idx) = status;
+    end
     Map(start_locat(1), start_locat(2)) = status_vacant;
 	Map_plot();
 end
@@ -544,7 +576,7 @@ function Bug2(serPort, goal)
     update_bug2(serPort);
     
     % Stop robot motion
-    SetFwdVelAngVelCreate(serPort, 0, 0);
+    SetFwdVelAngVelCreate(serPort, 0, eps);
 end
 
 % initialize constants
