@@ -58,7 +58,7 @@ function  Scan(serPort)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             position = [total_x_dist, total_y_dist];
             position = transf(position, 0);
-            if Map(position(1),position(2)) ~= status_obstacle         
+            if ~ismember(status_obstacle,Map(position(1)-1:position(1)+1,position(2)-1:position(2)+1))         
                 display('Start to trace!!!!!')
                 display(transf(position, 0))
                 trace_boundary(serPort);
@@ -163,13 +163,16 @@ end
 function Map_plot()
     global figHandle;
     global Map;
+    global status_vacant;
 %     display(Map);
     figure (figHandle);
     
-%    save Map;
-    m = max(Map);
+    save Map;
+    m = max(max(Map));
     if(m(1) > 1)
-        purge_Map = Map > 1;
+        purge_Map = Map > 1; % where there is errorneous value
+        Map = Map.* ~purge_Map; 
+        Map = Map + purge_Map * status_vacant;
     end
     
     color_map = [1 1 1; 0 0 0.6; 0.8 0.8 0];
@@ -371,7 +374,7 @@ function trace_boundary(serPort)
               turnAngle (serPort, 0.2, angle_front);
               pause(0.05)
             end
-            tmp_boundary_map = update_current_map(tmp_boundary_map);
+%             tmp_boundary_map = update_current_map(tmp_boundary_map);
         elseif ~wallSensor  %need to turn back to obstacle
             display ('differntial turn');
             SetFwdVelRadiusRoomba (serPort, move_speed, -0.2);
@@ -381,7 +384,7 @@ function trace_boundary(serPort)
             pause(0.1) 
         end
         update_trace(serPort);
-        tmp_boundary_map = update_current_map(tmp_boundary_map);
+%         tmp_boundary_map = update_current_map(tmp_boundary_map);
 %         annotate_Map(status_obstacle);
 %         display(tmp_boundary_map);
         theta = total_angle - pi/2;
@@ -389,6 +392,12 @@ function trace_boundary(serPort)
         right_side_y = total_y_dist + sin(theta)*0.15;
         annotate_Map(total_x_dist, total_y_dist, status_vacant);
         annotate_Map(right_side_x, right_side_y, status_obstacle);
+        
+        pos = transf([right_side_x, right_side_y],0);
+        if Map(pos(1), pos(2)) == status_obstacle
+            tmp_boundary_map = update_current_map([right_side_x, right_side_y], tmp_boundary_map);
+        end
+        
         Map_plot();
         Map_plot();
 
@@ -481,6 +490,7 @@ function fill_blocks(tmp_boundary_map)
         tmp_outside_map = ~test_filled_map;
         Map = Map.*test_filled_map; % clean out accidentally marked-vacant outside area
         Map_wall = - tmp_boundary_map - tmp_outside_map * status_obstacle;
+        save Map_wall;
     end
     
     boundary_map = (Map + Map_wall) == status_obstacle; 
@@ -490,13 +500,11 @@ function fill_blocks(tmp_boundary_map)
     Map = (filled_map)*status_obstacle - Map_wall + (Map == status_vacant) * status_vacant;
 end
 
-function map = update_current_map(map)
+function map = update_current_map(pos, map)
 
-    global total_x_dist;
-    global total_y_dist;
     global status_obstacle;
 
-    block_xy = transf([total_x_dist, total_y_dist], 0);
+    block_xy = transf(pos, 0);
     x_idx = block_xy(1);
     y_idx = block_xy(2);
     display('update');
