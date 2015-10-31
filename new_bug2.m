@@ -7,6 +7,7 @@ function  Scan(serPort)
     global trace_flag;
     global move_speed;
     global status_obstacle;
+    global status_unexplored;
     
     init();
     init_map();
@@ -15,7 +16,7 @@ function  Scan(serPort)
         trace_flag = 0;
         % Whether the Map is searched completely
         display(cur_locat);
-        if ~ismember(0,Map)
+        if ~ismember(status_unexplored, Map)
             display('Search complete!');
             break;
         end
@@ -159,11 +160,22 @@ function dist = align(serPort,current,goal)
     global total_angle;
     global turn_speed;
     if goal(2)>=current(2)
+        acos(dot(goal-current,[1,0])/norm(goal-current))
+%         while (abs(total_angle-acos(dot(goal-current,[1,0])/norm(goal-current)))>2)
+%              turnAngle (serPort, turn_speed, 1);
+%              update(serPort);
+%         end
         theta = acos(dot(goal-current,[1,0])/norm(goal-current))-total_angle;
         turnAngle (serPort, turn_speed, 180*theta/pi);
 %        display(180*theta/pi)
 %        total_angle = acos(dot(goal-current,[1,0])/norm(goal-current));
     else
+        acos(dot(goal-current,[1,0])/norm(goal-current))
+%         while (abs(total_angle+acos(dot(goal-current,[1,0])/norm(goal-current)))>2)
+%              turnAngle (serPort, turn_speed, -1);
+%              update(serPort);
+%         end
+        
         theta = acos(dot(goal-current,[1,0])/norm(goal-current))+total_angle;
         turnAngle (serPort, turn_speed, -180*theta/pi);
         %display(180*theta/pi)
@@ -371,6 +383,7 @@ function fill_blocks(tmp_boundary_map)
     if test_filled_map (start_locat(1), start_locat(2)) == 1
         display('we just traced the wall!');
         tmp_outside_map = ~test_filled_map;
+        Map = Map.*test_filled_map; % clean out accidentally marked-vacant outside area
         Map_wall = - tmp_boundary_map - tmp_outside_map * status_obstacle;
     end
     
