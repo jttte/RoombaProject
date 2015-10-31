@@ -89,10 +89,11 @@ function  Scan(serPort)
         position = [total_x_dist, total_y_dist];
         position = transf(position, 0);
         if position ~= goal
-            disp('fine tuning position');
             distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1));
             while norm([total_x_dist,total_y_dist] - transf(position,1)) < distance
+                disp('fine tuning position');
                 SetFwdVelRadiusRoomba(serPort, move_speed, Inf);
+                update(serPort);
                 pause(loop_pause_time);
             end
         end
@@ -159,6 +160,13 @@ function Map_plot()
     global Map;
 %     display(Map);
     figure (figHandle);
+    
+    save Map;
+    m = max(Map);
+    if(m(1) > 1)
+        purge_Map = Map > 1;
+    end
+    
     color_map = [1 1 1; 0 0 0.6; 0.8 0.8 0];
     colormap(color_map);
     pcolor(Map);
