@@ -8,6 +8,7 @@ function  Scan(serPort)
     global move_speed;
     global status_obstacle;
     global status_unexplored;
+    global loop_pause_time;
     
     init();
     init_map();
@@ -30,7 +31,7 @@ function  Scan(serPort)
         end
         display(goal);
         distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1));
-        while norm([total_x_dist,total_y_dist]-transf(cur_locat,1)) < distance
+        while norm([total_x_dist,total_y_dist] - transf(goal,1)) > 0.15
             SetFwdVelRadiusRoomba(serPort, move_speed, Inf);
             [BumpRight,BumpLeft,WheDropRight,WheDropLeft,WheDropCaster,BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
             sensor = BumpFront||BumpLeft||BumpRight||WallSensorReadRoomba (serPort);
@@ -40,6 +41,7 @@ function  Scan(serPort)
                 trace_flag = 1;
                 break;               
             end
+            pause(loop_pause_time);
         end
         SetFwdVelRadiusRoomba(serPort, 0, 0);         % Stop!
         if trace_flag
@@ -64,12 +66,23 @@ function  Scan(serPort)
             Bug2(serPort, distance);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
+        
+        position = [total_x_dist, total_y_dist];
+        position = transf(position, 0);
+        if position ~= goal
+            distance = align(serPort,[total_x_dist,total_y_dist],transf(goal,1));
+            while norm([total_x_dist,total_y_dist] - transf(goal,1)) > 0.15
+                SetFwdVelRadiusRoomba(serPort, move_speed, Inf);
+                pause(loop_pause_time);
+            end
+        end
         cur_locat = goal;
         % Modification
         
-        Map(cur_locat(1),cur_locat(2)) = status_vacant;
+        annotate_Map(status_vacant);
+%         Map(cur_locat(1),cur_locat(2)) = status_vacant;
         Map_plot();
-        pause(0.1);
+        pause(loop_pause_time);
     end
     SetFwdVelRadiusRoomba(serPort, 0, eps);
     
@@ -313,7 +326,7 @@ function trace_boundary(serPort)
     end % end of tracing boundary loop
     
     % Stop robot motion
-    SetFwdVelAngVelCreate(serPort, 0, 0);
+    SetFwdVelAngVelCreate(serPort, 0, eps);
     
     annotate_Map(status_obstacle);
 %     tmp_boundary_map = fill_blocks(tmp_boundary_map);
@@ -429,16 +442,16 @@ function annotate_Map(status)
     global Map;
     global total_x_dist;
     global total_y_dist;
-%     global status_obstacle;
+    global start_locat;
+    global status_vacant;
     
     block_xy = transf([total_x_dist, total_y_dist], 0);
     x_idx = block_xy(1);
     y_idx = block_xy(2);
     
-    Map(x_idx, y_idx) = status;   
+    Map(x_idx, y_idx) = status;
+    Map(start_locat(1), start_locat(2)) = status_vacant;
 	Map_plot();
-    
-    
 end
 
 
