@@ -45,7 +45,10 @@ function  Scan(serPort)
         if trace_flag
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             position = [total_x_dist, total_y_dist];
-            if Map(transf(position, 0)) ~= status_obstacle         
+            position = transf(position, 0);
+            if Map(position(1),position(2)) ~= status_obstacle         
+                display('Start to trace!!!!!')
+                display(transf(position, 0))
                 trace_boundary(serPort);
             end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -62,6 +65,8 @@ function  Scan(serPort)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         cur_locat = goal;
+        % Modification
+        
         Map(cur_locat(1),cur_locat(2)) = status_vacant;
         Map_plot();
         pause(0.1);
@@ -161,30 +166,38 @@ end
 function dist = align(serPort,current,goal)
     global total_angle;
     global turn_speed;
-    if goal(2)>=current(2)
-        acos(dot(goal-current,[1,0])/norm(goal-current))
-%         while (abs(total_angle-acos(dot(goal-current,[1,0])/norm(goal-current)))>2)
-%              turnAngle (serPort, turn_speed, 1);
-%              update(serPort);
-%         end
-        theta = acos(dot(goal-current,[1,0])/norm(goal-current))-total_angle;
-        turnAngle (serPort, turn_speed, 180*theta/pi);
-%        display(180*theta/pi)
-%        total_angle = acos(dot(goal-current,[1,0])/norm(goal-current));
+    display(acos(dot(goal-current,[1,0])/norm(goal-current)));
+    display(goal)
+    
+    if goal(2)>current(2)
+        error = angleT(total_angle)-acos(dot(goal-current,[1,0])/norm(goal-current));
+        while (abs(error)>0.04)
+             turnAngle (serPort, turn_speed, -0.1*sign(error));
+             update(serPort);
+             error = angleT(total_angle)-acos(dot(goal-current,[1,0])/norm(goal-current));
+             display(error)
+             display(total_angle)
+        end
     else
-        acos(dot(goal-current,[1,0])/norm(goal-current))
-%         while (abs(total_angle+acos(dot(goal-current,[1,0])/norm(goal-current)))>2)
-%              turnAngle (serPort, turn_speed, -1);
-%              update(serPort);
-%         end
-        
-        theta = acos(dot(goal-current,[1,0])/norm(goal-current))+total_angle;
-        turnAngle (serPort, turn_speed, -180*theta/pi);
-        %display(180*theta/pi)
-        %total_angle = -acos(dot(goal-current,[1,0])/norm(goal-current));
+        error = mod(total_angle,-2*pi)+acos(dot(goal-current,[1,0])/norm(goal-current));
+        while (abs(error)>0.04)
+             turnAngle (serPort, turn_speed, -0.1*sign(error));
+             update(serPort);
+             error = mod(total_angle,-2*pi)+acos(dot(goal-current,[1,0])/norm(goal-current));
+             display(error)
+             display(total_angle)
+        end
     end
-    update(serPort);
+    
     dist = norm(goal-current);
+end
+
+function  output= angleT(input)
+    if mod(input,2*pi)>pi
+        output = mod(input,-pi);
+    else
+        output = mod(input,pi);
+    end
 end
 
 % Transfer coordinates between physical world and matrix 
@@ -200,7 +213,7 @@ function loca2 = transf(loca1,flag)
        loca2 = round(loca1/para);
        loca2 = [loca2(1),-loca2(2)];
        loca2 = loca2 + start_locat;
-    end   
+    end
 end
 
 function update(serPort)
