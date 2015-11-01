@@ -131,8 +131,8 @@ function  hw3_team_24(serPort)
         annotate_Map(total_x_dist, total_y_dist, status_vacant);
         Map_plot();
         
-        % check if we haven't found new object within the last 120 seconds
-        if cputime - last_unexplored_time > 120.0
+        % check if we haven't found new object within the last 180 seconds
+        if cputime - last_unexplored_time > 180.0
             display('timeout!');
             disp(cputime);
             disp(last_unexplored_time);
@@ -173,8 +173,8 @@ function init()
     total_y_dist = 0;
     total_angle = 0;
     
-    Map_size = [31,31];     % The last row/column is not used in colormap
-    start_locat = [15,15];
+    Map_size = [51,51];     % The last row/column is not used in colormap
+    start_locat = [25,25];
     cur_locat = start_locat;
     Map = zeros(Map_size(1),Map_size(2));
     Map_wall = Map;
