@@ -10,6 +10,7 @@ function  Scan(serPort)
     global status_unexplored;
     global loop_pause_time;
     global Map_size;
+    global last_unexplored_time;
     
     init();
     init_map();
@@ -64,6 +65,11 @@ function  Scan(serPort)
                 trace_boundary(serPort);
             end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            if ~ismember(status_unexplored, Map)
+                display('Search complete!');
+                break;
+            end
+            
             current = cur_locat;
             goal = next(current);
             
@@ -112,6 +118,12 @@ function  Scan(serPort)
         annotate_Map(total_x_dist, total_y_dist, status_vacant);
 %         Map(cur_locat(1),cur_locat(2)) = status_vacant;
         Map_plot();
+        if cputime - last_unexplored_time > 60.0
+            display('timeout!');
+            disp(cputime);
+            disp(last_unexplored_time);
+            break;
+        end
         pause(loop_pause_time);
     end
     SetFwdVelRadiusRoomba(serPort, 0, eps);
@@ -133,6 +145,8 @@ function init()
     global turn_speed;
     global trace_flag;          % whether BUG algorithm need to be implemented
     global move_speed;
+    global last_unexplored_time;
+    
     para = 0.3;
     status_unexplored = 0;
     status_obstacle = 0.5;
@@ -150,8 +164,8 @@ function init()
     cur_locat = start_locat;
     Map = zeros(Map_size(1),Map_size(2));
     Map_wall = Map;
-%     Map(end,:)=status_obstacle; Map(:,end) = status_obstacle;
     Map(start_locat(1),start_locat(2)) = status_vacant;
+    last_unexplored_time = cputime;
 
 end
 
@@ -178,8 +192,6 @@ function Map_plot()
     color_map = [1 1 1; 0 0 0.6; 0.8 0.8 0];
     colormap(color_map);
     pcolor(Map);
-%     figure(2)
-%     imagesc(Map);
 end
 
 function goal = next(current)
@@ -463,20 +475,6 @@ function isDone = CheckBack(x,y)
 end
 
 function fill_blocks(tmp_boundary_map)
-%     global start_locat;
-%     global status_obstacle;
-%  
-%         
-%     mapfill = imfill(map,'hole');
-%     if map(start_locat(1),start_locat(2)) ~= status_obstacle
-%         map = mapfill;
-%     else
-%         mapfill(find(map==status_obstacle)) = 1;
-%         mapfill(find(map==0)) = status_obstacle;
-%         mapfill(find(map==1)) = 0;
-%         map = mapfill+map;
-%     end   
-
     global Map;
     global Map_wall;
     global status_obstacle;
@@ -519,10 +517,19 @@ function annotate_Map(x, y, status)
     global start_locat;
     global status_vacant;
     global status_unexplored;
+    global status_obstacle;
+    global last_unexplored_time;
     
     block_xy = transf([x, y], 0);
     x_idx = block_xy(1);
     y_idx = block_xy(2);
+    
+    before_value = Map(x_idx, y_idx);
+    
+    % calculate stop time.
+    if(before_value == status_unexplored && status == status_obstacle)
+        last_unexplored_time = cputime;
+    end
     
     % if it's obstacle, don't change it. be conservative
     if Map(x_idx, y_idx) == status_unexplored || Map(x_idx, y_idx) == status_vacant
