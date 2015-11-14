@@ -14,6 +14,25 @@ function isTrue = isIntersect(line1, line2)
     (yint >= myline(2,2) && yint <= myline(1,2));
     
     closeTo = @(point1, point2) (abs(point1-point2)<0.001);
+    
+    % same line segment
+    if  closeTo(line2(1, 1),line1(1, 1))  &&...
+        closeTo(line2(1, 2),line1(1, 2))  &&...
+        closeTo(line2(2, 1),line1(2, 1))  &&...
+        closeTo(line2(2, 2),line1(2, 2))
+        isTrue = false;
+        return;
+    end
+    
+    if  closeTo(line2(1, 1),line1(2, 1))  &&...
+        closeTo(line2(1, 2),line1(2, 2))  &&...
+        closeTo(line2(2, 1),line1(1, 1))  &&...
+        closeTo(line2(2, 2),line1(1, 2))
+        isTrue = false;
+        return;
+    end
+    
+    
         
     m1 = slope(line1);
     m2 = slope(line2);  
@@ -23,6 +42,10 @@ function isTrue = isIntersect(line1, line2)
         b = line2(1,2)-m2*line2(1,1);
         t = line1(1, 1)*m2 + b;
         v = (line1(1, 2) - t) * (line1(2, 2) - t);
+        if isPointYInside (t, line2) == false
+            isTrue = false;
+            return;
+        end
         if  v < 0 && abs(line1(1, 2) - t) > 0.01 && abs(line1(2, 2) - t) > 0.01
             isTrue = true;
         elseif abs(v) < 0.001
@@ -37,6 +60,10 @@ function isTrue = isIntersect(line1, line2)
         b = line1(1,2)-m1*line1(1,1);
         t = line2(1, 1)*m1 + b;
         v = (line2(1, 2) - t) * (line2(2, 2) - t);
+        if isPointYInside (t, line1) == false
+            isTrue = false;
+            return;
+        end
         if v < 0 && abs(line2(1, 2) - t)> 0.01 && abs(line2(2, 2) - t) > 0.01
             isTrue = true;
         elseif abs(v) < 0.001
