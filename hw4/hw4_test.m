@@ -82,6 +82,8 @@ function hw4_test()
         coor_x{i} = x(k{i});
         coor_y{i} = y(k{i});
         [xG{i},yG{i},dimG(i)] = removeP(coor_x{i},coor_y{i});
+        xG{i} = xG{i} - 0.35/2;
+        yG{i} = yG{i} - 0.35/2;
         plot(xG{i},yG{i},'k')
         hold on;
         plot([xG{i}(end), xG{i}(1)], [yG{i}(end), yG{i}(1)], 'k');
@@ -228,7 +230,7 @@ function [grown_vertex_n, V_graph] = build_vgraph()
             end
             
             % check if grown vertex is still inside walls
-            if ~inpolygon(x,y,wall(:, 1)',wall(:, 2)')
+            if ~inpolygon(x, y, wall(:, 1)', wall(:, 2)')
                 banned_list = [banned_list idx + v];
                 plot (x, y, 'r*');
                 hold on;
