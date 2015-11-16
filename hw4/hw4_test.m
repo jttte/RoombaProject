@@ -229,8 +229,9 @@ function [grown_vertex_n, V_graph] = build_vgraph()
                 end
             end
             
-            % check if grown vertex is still inside walls
-            if ~inpolygon(x, y, wall(:, 1)', wall(:, 2)')
+            % check if grown vertex is still inside walls (check diameter)
+            if ~inpolygon(x - 0.35/2, y - 0.35/2, wall(:, 1)', wall(:, 2)') ||...
+               ~inpolygon(x + 0.35/2, y + 0.35/2, wall(:, 1)', wall(:, 2)')
                 banned_list = [banned_list idx + v];
                 plot (x, y, 'r*');
                 hold on;
