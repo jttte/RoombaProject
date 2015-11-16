@@ -222,7 +222,16 @@ function [grown_vertex_n, V_graph] = build_vgraph()
                 end
                 if inpolygon(x,y,xG{ii},yG{ii}) % vertex (idx+v) is not accessable
                     banned_list = [banned_list idx + v];
+                    plot (x, y, 'r*');
+                    hold on;
                 end
+            end
+            
+            % check if grown vertex is still inside walls
+            if ~inpolygon(x,y,wall(:, 1)',wall(:, 2)')
+                banned_list = [banned_list idx + v];
+                plot (x, y, 'r*');
+                hold on;
             end
         end
         
@@ -267,7 +276,7 @@ function [grown_vertex_n, V_graph] = build_vgraph()
            continue;
        end
        for j = i + 1 : grown_vertex_n + 2
-           if any(i==banned_list)
+           if any(j==banned_list)
             continue;
            end
            add = true;
