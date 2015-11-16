@@ -190,6 +190,7 @@ function [grown_vertex_n, V_graph] = build_vgraph()
     % pre-computations
      
     N = length(dimension);
+    banned_list = [];
     vertex_list_x = [];
     vertex_list_y = [];
     
@@ -210,7 +211,23 @@ function [grown_vertex_n, V_graph] = build_vgraph()
                 E_obstacles = [E_obstacles; [idx + j, idx + k]];
             end
         end
+        
+        % check if grown vertex is inside the polygon of other obstacles
+        for v = 1:d
+            x = cx(v);
+            y = cy(v);
+            for ii = 1:N
+                if ii == i
+                    continue;
+                end
+                if inpolygon(x,y,xG{ii},yG{ii}) % vertex (idx+v) is not accessable
+                    banned_list = [banned_list idx + v];
+                end
+            end
+        end
+        
         idx = idx + d;
+        
     end
     
     % number of vertices that belong to obstacles
@@ -246,7 +263,13 @@ function [grown_vertex_n, V_graph] = build_vgraph()
     % v_graph
     figure(figHandle);
     for i = 1 : grown_vertex_n + 2
+       if any(i==banned_list)
+           continue;
+       end
        for j = i + 1 : grown_vertex_n + 2
+           if any(i==banned_list)
+            continue;
+           end
            add = true;
            for k = 1:size(E_obstacles, 1)
                point1 = [vertex_list_x(E_obstacles(k, 1)), vertex_list_y(E_obstacles(k, 1))];
