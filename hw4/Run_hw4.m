@@ -4,15 +4,19 @@ function Run_hw4(serPort,mark_x,mark_y)
     global total_y_dist;
     global move_speed;
     init();
-    % mark_x = [0,1,1,1];
-    % mark_y = [0,-1,-2,1];
-    total_x_dist = mark_x(1);
-    total_y_dist = mark_y(1);
+    init_plot();
+    mark_x = [-0.0368   -0.0368    1.1238    1.1238   -0.6100];
+    mark_y = [0.6892    1.5092    7.7916    8.6116   13.7640];
+%     total_x_dist = mark_x(1);
+%     total_y_dist = mark_y(1);
     
-    for i=2:length(mark_x)
+    for i=1:length(mark_x)
         dist = align(serPort,[total_x_dist,total_y_dist],[mark_x(i),mark_y(i)]);
         travelDist(serPort,move_speed,dist);
         update(serPort);
+        SetFwdVelAngVelCreate(serPort, 0, 0);
+        pause(2);
+        
     end
 end
 
@@ -20,6 +24,8 @@ end
 function dist = align(serPort,current,goal)
     global total_angle;
     global turn_speed;
+    display(current)
+    display(goal)
     angle  = acos(dot(goal-current,[1,0])/norm(goal-current));
     if goal(2)>current(2)
         angle = angle - total_angle;
@@ -40,6 +46,7 @@ function update(serPort)
     global total_x_dist;
     global total_y_dist;
     global total_angle;
+    
     dist = DistanceSensorRoomba(serPort);
     angle = AngleSensorRoomba(serPort);
     total_angle = total_angle + angle;
@@ -55,6 +62,20 @@ function update(serPort)
     y = dist * sin (total_angle);
     total_x_dist = total_x_dist + x;
     total_y_dist = total_y_dist + y;
+    
+    % plotting
+    global fig_plotter;
+    
+    xlabel ('Position in X-axis (m)');
+    ylabel ('Position in Y-axis (m)');
+    title  ('Position of iRobot');
+    figure (fig_plotter);
+    plot (total_x_dist, total_y_dist, 'o', 'MarkerEdgeColor','b', 'MarkerSize', 9);
+    dir_x = 0.001 * cos (total_angle);
+    dir_y = 0.001 * sin (total_angle);
+    plot (total_x_dist + dir_x, total_y_dist + dir_y, 'o', 'MarkerEdgeColor','r', 'MarkerSize', 4);
+    axis equal
+    hold on;
 end
 
 function init()
@@ -64,9 +85,20 @@ function init()
     global turn_speed;
     global move_speed;
 
-    move_speed = 0.2;
+    move_speed = 0.4;
     turn_speed = 0.2;    
     total_x_dist = 0;
     total_y_dist = 0;
     total_angle = pi/2;
+end
+
+function init_plot()
+    
+    global fig_plotter;
+    
+    fig_plotter = figure;
+    axis equal;
+    xlabel ('Position in X-axis (m)');
+    ylabel ('Position in Y-axis (m)');
+    title  ('Position of iRobot');
 end
