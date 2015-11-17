@@ -16,7 +16,7 @@ function hw4_test()
     
     E_obstacles = [];
     n_total_vertices = 0;
-    fileID = fopen('hw4_world_and_obstacles_convex.txt','r');
+    fileID = fopen('hw4_world_and_obstacles_convex_copy.txt','r');
     formatSpec = '%f';
     coor_list = fscanf(fileID,formatSpec);
     N = coor_list(1)-1;
@@ -150,7 +150,6 @@ end
 function [Rx,Ry,j] = removeP(x,y)
     dim = length(x);
     j = 1;
- %   Rx(1) = x(1); Ry(1) = y(1);
     vec_SS = [x(2)-x(1),y(2)-y(1)];
     vec_S = vec_SS;
     S = 1;
@@ -179,8 +178,6 @@ function [grown_vertex_n, V_graph] = build_vgraph()
     global dimension
     global vertex_list_x
     global vertex_list_y
-    global n_total_vertices
-    global E_map
     global start_point
     global goal_point
     global E_obstacles
@@ -196,8 +193,6 @@ function [grown_vertex_n, V_graph] = build_vgraph()
     vertex_list_x = [];
     vertex_list_y = [];
     
-    E_map = zeros(n_total_vertices + 2 + size(wall, 1), n_total_vertices + 2 + size(wall, 1));
-    
     idx = 0;
     for i = 1:N
         cx = xG{i};
@@ -208,8 +203,8 @@ function [grown_vertex_n, V_graph] = build_vgraph()
         vertex_list_y = [vertex_list_y, cy];
         for j = 1 : d - 1
             for k = j+1 : d
-                E_map(idx + j, idx + k) = 1;
-                E_map(idx + k, idx + j) = 1;
+%                 E_map(idx + j, idx + k) = 1;
+%                 E_map(idx + k, idx + j) = 1;
                 E_obstacles = [E_obstacles; [idx + j, idx + k]];
             end
         end
@@ -257,14 +252,10 @@ function [grown_vertex_n, V_graph] = build_vgraph()
         vertex_list_x = [vertex_list_x, wall(i, 1)];
         vertex_list_y = [vertex_list_y, wall(i, 2)];
         if i > 1
-            E_map(idx, idx - 1) = 1;
-            E_map(idx - 1, idx) = 1;
             E_obstacles = [E_obstacles; [idx, idx - 1]];
         end
         idx = idx + 1;       
     end
-    E_map(idx - 1, idx - d) = 1;
-    E_map(idx - d, idx - 1) = 1;
     E_obstacles = [E_obstacles; [idx - 1, idx - d]];
     
     

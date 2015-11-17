@@ -4,7 +4,6 @@ function backtrack = dijkstra(G, pair)
     % backtrack: idx of path from start to end point (1 * p)
 
     v = size(G, 1); % Number of vertices
-%     D = [];
     path = zeros(1, v);
 
     for i = 1:v
@@ -45,7 +44,7 @@ function backtrack = dijkstra(G, pair)
             end
         end
     end
-%     D = dist(pair(2));
+
     idx = pair(2);
     backtrack = [];
 
