@@ -1,14 +1,17 @@
 % [mark_x,mark_y] is coordinates of the points on the shortest path
-function Run_hw4(serPort,mark_x,mark_y)
+function Run_hw4(serPort)
     global total_x_dist;
     global total_y_dist;
     global move_speed;
+    
+    % clean records
+    DistanceSensorRoomba(serPort);
+    AngleSensorRoomba(serPort);
+    
     init();
     init_plot();
-    mark_x = [-0.0368   -0.0368    1.1238    1.1238   -0.6100];
-    mark_y = [0.6892    1.5092    7.7916    8.6116   13.7640];
-%     total_x_dist = mark_x(1);
-%     total_y_dist = mark_y(1);
+    mark_x = [-0.0368   -0.0368    0.0344    0.0344   -0.7873   -0.7873   -0.6100];
+    mark_y = [0.6892    1.5092    2.9291    3.7491    7.7916    8.6116   13.7640];
     
     for i=1:length(mark_x)
         dist = align(serPort,[total_x_dist,total_y_dist],[mark_x(i),mark_y(i)]);
@@ -18,6 +21,8 @@ function Run_hw4(serPort,mark_x,mark_y)
         pause(2);
         
     end
+    display(total_x_dist);
+    display(total_y_dist);
 end
 
 
