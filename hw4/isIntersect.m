@@ -42,15 +42,22 @@ function isTrue = isIntersect(line1, line2)
         b = line2(1,2)-m2*line2(1,1);
         t = line1(1, 1)*m2 + b;
         v = (line1(1, 2) - t) * (line1(2, 2) - t);
-        if isPointYInside (t, line2) == false
+        if isPointYInside (t, line1) == false
             isTrue = false;
             return;
         end
-        if  v < 0 && abs(line1(1, 2) - t) > 0.01 && abs(line1(2, 2) - t) > 0.01
-            isTrue = true;
-        elseif abs(v) < 0.001
+        if isPointXInside (line1(2, 1), line2) == false
             isTrue = false;
-        else
+            return;
+        end
+%         if  v < 0 && abs(line1(1, 2) - t) > 0.01 && abs(line1(2, 2) - t) > 0.01
+%             isTrue = true;
+%         elseif abs(v) < 0.001
+%             isTrue = false;
+%         else
+%             isTrue = false;
+%         end
+        if closeTo(line2(1,1), line1(2, 1)) || closeTo(line2(2,1), line1(2, 1))
             isTrue = false;
         end
         return;
@@ -60,15 +67,23 @@ function isTrue = isIntersect(line1, line2)
         b = line1(1,2)-m1*line1(1,1);
         t = line2(1, 1)*m1 + b;
         v = (line2(1, 2) - t) * (line2(2, 2) - t);
-        if isPointYInside (t, line1) == false
+        if isPointYInside (t, line2) == false
             isTrue = false;
             return;
         end
-        if v < 0 && abs(line2(1, 2) - t)> 0.01 && abs(line2(2, 2) - t) > 0.01
-            isTrue = true;
-        elseif abs(v) < 0.001
+        
+        if isPointXInside (line2(2, 1), line1) == false
             isTrue = false;
-        else
+            return;
+        end
+%         if v < 0 && abs(line2(1, 2) - t)> 0.01 && abs(line2(2, 2) - t) > 0.01
+%             isTrue = true;
+%         elseif abs(v) < 0.001
+%             isTrue = false;
+%         else
+%             isTrue = false;
+%         end
+        if closeTo(line1(1,1), line2(2, 1)) || closeTo(line1(2,1), line2(2, 1))
             isTrue = false;
         end
         return;
@@ -76,12 +91,14 @@ function isTrue = isIntersect(line1, line2)
     
     % check parallel case
     if closeTo(1/m1, 1/m2) || closeTo(m1, m2)
-        b1 = intersect(line1,m1);
-        b2 = intersect(line2,m2);
-        if closeTo(b1, b2)
-            isTrue = true;
-            return;
-        end
+%         b1 = intersect(line1,m1);
+%         b2 = intersect(line2,m2);
+%         if closeTo(b1, b2)
+%             isTrue = true;
+%             return;
+%         end
+        isTrue = false;
+        return;
     end
         
 

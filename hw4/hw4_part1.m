@@ -204,6 +204,7 @@ function [grown_vertex_n, V_graph] = build_vgraph()
 
         vertex_list_x = [vertex_list_x, cx];
         vertex_list_y = [vertex_list_y, cy];
+        
         for j = 1 : d - 1
             for k = j+1 : d
                 E_obstacles = [E_obstacles; [idx + j, idx + k]];
@@ -232,6 +233,7 @@ function [grown_vertex_n, V_graph] = build_vgraph()
 %                 plot (x, y, 'r*');
 %                 hold on;
             end
+            text(vertex_list_x(idx + v), vertex_list_y(idx + v), num2str(idx + v));
         end
         
         idx = idx + d;
