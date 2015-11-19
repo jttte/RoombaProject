@@ -1,3 +1,15 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COMS W4733 Computational Aspects of Robotics 2015
+%
+% Homework 4
+%
+% Team number: 24
+% Team leader: Chia-Jung Lin (cl3295)
+% Team members: Cheng Zhang (cz2398), Ming-Ching Chu (mc4107)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% main function
 function hw4_part1()
     global coordinates
     global dimension
@@ -68,8 +80,10 @@ function hw4_part1()
 
  
     figure(figHandle);
-
-    % grow obstacles
+    
+    %%%%%%%%%%%%%%%%%%%%%%
+    % Grow Obstacles
+    %%%%%%%%%%%%%%%%%%%%%%
     M = N;
     obs_dim = dimension(1:end);
     obs = coordinates(1:end,1:end);
@@ -233,7 +247,7 @@ function [grown_vertex_n, V_graph] = build_vgraph()
 %                 plot (x, y, 'r*');
 %                 hold on;
             end
-            text(vertex_list_x(idx + v), vertex_list_y(idx + v), num2str(idx + v));
+%             text(vertex_list_x(idx + v), vertex_list_y(idx + v), num2str(idx + v));
         end
         
         idx = idx + d;

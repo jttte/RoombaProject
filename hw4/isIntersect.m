@@ -1,3 +1,14 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COMS W4733 Computational Aspects of Robotics 2015
+%
+% Homework 4
+%
+% Team number: 24
+% Team leader: Chia-Jung Lin (cl3295)
+% Team members: Cheng Zhang (cz2398), Ming-Ching Chu (mc4107)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function isTrue = isIntersect(line1, line2)
     % local functions
     isTrue = true;
@@ -41,7 +52,7 @@ function isTrue = isIntersect(line1, line2)
     if line1(2, 1) == line1(1, 1) && line2(2, 1) ~= line2(1, 1)
         b = line2(1,2)-m2*line2(1,1);
         t = line1(1, 1)*m2 + b;
-        v = (line1(1, 2) - t) * (line1(2, 2) - t);
+
         if isPointYInside (t, line1) == false
             isTrue = false;
             return;
@@ -50,13 +61,7 @@ function isTrue = isIntersect(line1, line2)
             isTrue = false;
             return;
         end
-%         if  v < 0 && abs(line1(1, 2) - t) > 0.01 && abs(line1(2, 2) - t) > 0.01
-%             isTrue = true;
-%         elseif abs(v) < 0.001
-%             isTrue = false;
-%         else
-%             isTrue = false;
-%         end
+
         if closeTo(line2(1,1), line1(2, 1)) || closeTo(line2(2,1), line1(2, 1))
             isTrue = false;
         end
@@ -66,7 +71,7 @@ function isTrue = isIntersect(line1, line2)
     if line2(2, 1) == line2(1, 1) && line1(2, 1) ~= line1(1, 1)
         b = line1(1,2)-m1*line1(1,1);
         t = line2(1, 1)*m1 + b;
-        v = (line2(1, 2) - t) * (line2(2, 2) - t);
+
         if isPointYInside (t, line2) == false
             isTrue = false;
             return;
@@ -76,13 +81,7 @@ function isTrue = isIntersect(line1, line2)
             isTrue = false;
             return;
         end
-%         if v < 0 && abs(line2(1, 2) - t)> 0.01 && abs(line2(2, 2) - t) > 0.01
-%             isTrue = true;
-%         elseif abs(v) < 0.001
-%             isTrue = false;
-%         else
-%             isTrue = false;
-%         end
+
         if closeTo(line1(1,1), line2(2, 1)) || closeTo(line1(2,1), line2(2, 1))
             isTrue = false;
         end
@@ -130,7 +129,7 @@ function isTrue = isIntersect(line1, line2)
 %     plot([line1(1,1), line1(2,1)],[line1(1,2), line1(2,2)], 'r');
 %     hold on;
 %     plot([line2(1,1), line2(2,1)],[line2(1,2), line2(2,2)], 'r');
-    isTrue = false;
+        isTrue = false;
     end
    
     
