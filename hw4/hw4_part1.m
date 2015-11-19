@@ -217,8 +217,8 @@ function [grown_vertex_n, V_graph] = build_vgraph()
         cy = yG{i};
         d = length(cx);
 
-        vertex_list_x = [vertex_list_x, cx];
-        vertex_list_y = [vertex_list_y, cy];
+        vertex_list_x = [vertex_list_x, cx'];
+        vertex_list_y = [vertex_list_y, cy'];
         
         for j = 1 : d - 1
             for k = j+1 : d
