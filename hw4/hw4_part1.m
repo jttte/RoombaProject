@@ -92,10 +92,11 @@ function hw4_part1()
     for i = 1:M
         x = Gobs(1:Gdim(i),2*i-1);
         y = Gobs(1:Gdim(i),2*i);
-        k{i} = convhull(x,y);
-        coor_x{i} = x(k{i});
-        coor_y{i} = y(k{i});
-        [xG{i},yG{i},dimG(i)] = removeP(coor_x{i},coor_y{i});
+        [xG{i}, yG{i}, dimG(i)] = convex_hull(x, y);
+%         k{i} = convhull(x,y);
+%         coor_x{i} = x(k{i});
+%         coor_y{i} = y(k{i});
+%         [xG{i},yG{i},dimG(i)] = removeP(coor_x{i},coor_y{i});
         xG{i} = xG{i} - 0.35/2;
         yG{i} = yG{i} - 0.35/2;
         plot(xG{i},yG{i},'k')
