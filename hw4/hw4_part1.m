@@ -26,8 +26,13 @@ function hw4_part1()
     global vertex_list_x
     global vertex_list_y
     
-    E_obstacles = [];
+    % store the idx of vertices that have edges between them (dim: p x 2)
+    E_obstacles = []; 
     n_total_vertices = 0;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Read txt file
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fileID = fopen('hw4_world_and_obstacles_convex.txt','r');
     formatSpec = '%f';
     coor_list = fscanf(fileID,formatSpec);
@@ -39,7 +44,7 @@ function hw4_part1()
     % plot
     figHandle = figure;
     
-    % store wall vertices somewhere else
+    % First, store wall vertices in 'wall'
     wall = [];
     m = coor_list(idx);
     idx = idx + 1;
@@ -48,6 +53,7 @@ function hw4_part1()
         idx = idx + 2;
     end
     
+    % Then, read in rest of the obstacle points and store in 'coordinates'
     for n = 1:N
         m = coor_list(idx);
         dimension(n) = m;
@@ -68,35 +74,32 @@ function hw4_part1()
         idx = idx + 1;
     end
     
-    % wall
+    % plot wall
     x = wall(:, 1);
     y = wall(:, 2);
     plot(x,y,'c');
     hold on;
     plot([wall(end, 1), wall(1, 1)], [wall(end, 2), wall(1, 2)], 'c');
     hold on;
-%     axis([-6 6 -4 12]);
     axis equal;
 
  
-    figure(figHandle);
+
     
-    %%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Grow Obstacles
-    %%%%%%%%%%%%%%%%%%%%%%
-    M = N;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    figure(figHandle);
     obs_dim = dimension(1:end);
     obs = coordinates(1:end,1:end);
+    % put reference point at the upper-right corner of the square
     robot = [0,0;-0.35,0;-0.35,-0.35;0,-0.35];
-    [Gobs,Gdim] = Obj_grow(obs,M,obs_dim,robot);
-    for i = 1:M
+    [Gobs,Gdim] = Obj_grow(obs,N,obs_dim,robot);
+    for i = 1:N
         x = Gobs(1:Gdim(i),2*i-1);
         y = Gobs(1:Gdim(i),2*i);
         [xG{i}, yG{i}, dimG(i)] = convex_hull(x, y);
-%         k{i} = convhull(x,y);
-%         coor_x{i} = x(k{i});
-%         coor_y{i} = y(k{i});
-%         [xG{i},yG{i},dimG(i)] = removeP(coor_x{i},coor_y{i});
+        % move reference point to robot's center
         xG{i} = xG{i} - 0.35/2;
         yG{i} = yG{i} - 0.35/2;
         plot(xG{i},yG{i},'k')
@@ -108,7 +111,7 @@ function hw4_part1()
     axis equal;
      
 
-    % add in start and goal
+    % add in start and goal before computing v-graph
     fileID = fopen('hw4_start_goal.txt','r');
     formatSpec = '%f';
     start_end = fscanf(fileID,formatSpec);
@@ -122,12 +125,19 @@ function hw4_part1()
     axis equal;
     camroll(90)
     
-    % compute visibility graph
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Compute visibility graph
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     [grown_vertex_n, V_graph] = build_vgraph();
     
-    % shortest path
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Compute shortest path
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     path = dijkstra(V_graph, [grown_vertex_n + 1, grown_vertex_n + 2]);
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Draw results
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     x = [];
     y = [];
     
@@ -137,11 +147,13 @@ function hw4_part1()
         plot([vertex_list_x(i), vertex_list_x(j)],...
              [vertex_list_y(i), vertex_list_y(j)],'r');
         plot (vertex_list_x(j), vertex_list_y(j), 'r.');
-        x = [x, vertex_list_x(j) - start_point(1)];
+        
+        % x, y: coordinate system where start point is placed at (0, 0)
+        x = [x, vertex_list_x(j) - start_point(1)]; 
         y = [y, vertex_list_y(j) - start_point(2)];
     end
-    x
-    y
+    display(x);
+    display(y);
 end
 
 % N is the number of obstacle,obs_dim is array contains the dimension of
@@ -165,33 +177,6 @@ function [Gobs,Gdim] = Obj_grow(obs,N,obs_dim,rob)
     end
 end
 
-function [Rx,Ry,j] = removeP(x,y)
-    dim = length(x);
-    j = 1;
-    vec_SS = [x(2)-x(1),y(2)-y(1)];
-    vec_S = vec_SS;
-    S = 1;
-    for i = 2:dim
-        vec = [x(i)-x(S),y(i)-y(S)];
-        cosin = dot(vec,vec_S)/(norm(vec)*norm(vec_S));
-        if(cosin == 1)
-            continue;
-        else
-            Rx(j) = x(i-1);
-            Ry(j) = y(i-1);
-            j = j+1;
-            S = i-1;
-            vec_S = [x(i)-x(S),y(i)-y(S)];
-        end
-    end
-    cosin = dot(vec_S,vec_SS)/(norm(vec_S)*norm(vec_SS));
-    if cosin ~= 1
-        Rx(j) = x(1);Ry(j) = y(1);
-        j = j+1;
-    end
-    j = j-1;    
-end
-
 function [grown_vertex_n, V_graph] = build_vgraph()
     global dimension
     global vertex_list_x
@@ -207,7 +192,7 @@ function [grown_vertex_n, V_graph] = build_vgraph()
     % pre-computations
      
     N = length(dimension);
-    banned_list = [];
+    banned_list = []; % vertices that we don't want to consider
     vertex_list_x = [];
     vertex_list_y = [];
     
@@ -235,13 +220,14 @@ function [grown_vertex_n, V_graph] = build_vgraph()
                     continue;
                 end
                 if inpolygon(x,y,xG{ii},yG{ii}) % vertex (idx+v) is not accessable
-                    banned_list = [banned_list idx + v];
+                    banned_list = [banned_list idx + v]; % put in banned_list
 %                     plot (x, y, 'r*');
 %                     hold on;
                 end
             end
             
             % check if grown vertex is still inside walls (check diameter)
+            % also need to avoid points that are too close to walls
             if ~inpolygon(x - 0.35/2, y - 0.35/2, wall(:, 1)', wall(:, 2)') ||...
                ~inpolygon(x + 0.35/2, y + 0.35/2, wall(:, 1)', wall(:, 2)')
                 banned_list = [banned_list idx + v];
@@ -258,12 +244,12 @@ function [grown_vertex_n, V_graph] = build_vgraph()
     % number of vertices that belong to obstacles
     grown_vertex_n = idx;
     
-    % put start and goal points right behind obstacle points
+    % Then, put start and goal points right behind obstacle points
     vertex_list_x = [vertex_list_x, start_point(1), goal_point(1)];
     vertex_list_y = [vertex_list_y, start_point(2), goal_point(2)];
     idx = idx + 2;
     
-    % last, put in wall vertices
+    % Finally, put in wall vertices
     d = size(wall, 1);
     idx = idx + 1;
     for i = 1:d
@@ -280,8 +266,8 @@ function [grown_vertex_n, V_graph] = build_vgraph()
     % initialize v graph
     V_graph = zeros(grown_vertex_n + 2, grown_vertex_n + 2);
     
-    % if edge(i, j) doesn't intersect with obstacles, add edge(i, j) to
-    % v_graph
+    % if edge(i, j) doesn't intersect with obstacles, 
+    % add edge(i, j) to v_graph
     figure(figHandle);
     for i = 1 : grown_vertex_n + 2
        if any(i==banned_list)

@@ -12,20 +12,25 @@ b) Files:
        +—-hw4_part1.m
        +—-dijkstra.m
        +—-isIntersect.m
+       +—-convex_hull.m
+       +—-is_turn_left.m
        +—-example.png
 
 
 
 c) How to run:
-    To run our program, simply run hw4_part1.m.
+    To run our program, simply run hw4_part1().
 
 d) Details:
 
-1. need hw4_world_and_obstacles_convex.txt and hw4_start_goal.txt as specified in the homework description.
+1. We need hw4_world_and_obstacles_convex.txt and hw4_start_goal.txt as specified in the homework description.
 
 2. we set our robot model to be a square of 0.35 meter.
 
-3. reflection algorithm/convex hull algorithm:
-	please refer to the ‘Grow Obstacles’ section in hw4_part1.m
-4. Dijkstra algorithm:
-	please refer to dijkstra.m
+3. reflection algorithm: Please refer to the ‘Grow Obstacles’ section in hw4_part1.m, especially Obj_grow() function in hw4_part1.m.
+
+4. convex hull algorithm: We implemented the Graham’s algorithm. Please refer to convex_hull.m and is_turn_left.m.
+
+5. Dijkstra algorithm: Please refer to dijkstra.m
+
+6. It takes about 5 seconds to run our program :( Please be patient. Thank you!

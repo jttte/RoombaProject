@@ -1,3 +1,13 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COMS W4733 Computational Aspects of Robotics 2015
+%
+% Homework 4
+%
+% Team number: 24
+% Team leader: Chia-Jung Lin (cl3295)
+% Team members: Cheng Zhang (cz2398), Ming-Ching Chu (mc4107)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function isTrue = is_turn_left(point1, point2, point3)
     angle1 = acos( (point2(1) - point1(1)) / norm (point2 - point1));
     
