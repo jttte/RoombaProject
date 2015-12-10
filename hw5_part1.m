@@ -1,9 +1,9 @@
 function hw5_part1(serPort)
 
     close all; clc;
-    sample_rate = 2;
+    sample_rate = 1;
 %     img = imread('hallway_images/im2.png');
-    img = imread('http://192.168.0.103/snapshot.cgi?user=admin&pwd=&resolution=16&rate=0');
+    img = imread('http://192.168.0.103/snapshot.cgi?user=admin&pwd=');
     
     
     h = ceil(size(img, 1)/sample_rate);
@@ -22,8 +22,11 @@ function hw5_part1(serPort)
     
     last_area = area;
     while true
-        img = imread('http://192.168.0.103/snapshot.cgi?user=admin&pwd=&resolution=16&rate=0');
+        img = imread('http://192.168.0.103/snapshot.cgi?user=admin&pwd=');
         [area, center] = process_img(img, c, l, h, sample_rate);
+        if area == 0
+            continue;
+        end
         display(area);
         if abs(area-last_area) > last_area/8
             
@@ -103,6 +106,10 @@ function [area, center] = process_img(img, c, l, h, sample_rate)
     
     % find the biggest CC
     [area,idx] = max(numPixels);
+    if area == 0
+        center = 0;
+        return
+    end
     result = zeros(h, l);
     result(CC.PixelIdxList{idx}) = 1;
     center = uint8(sum(result * (1:l)') /area);
