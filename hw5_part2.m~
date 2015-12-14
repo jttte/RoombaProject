@@ -15,12 +15,11 @@ function hw5_part2(serPort)
 %     [c, area, center] = initialize_img_prop(img, x, y, l, h, sample_rate);
 %     c = 0.4709;
     
-    thresh_1 = 4000;     % area below this value means door not found
+    thresh_1 = 3000;     % area below this value means door not found
     move_distance = 0.1; % no door in sight, just move forwards
-    thresh_2 = 5;      % To align to the door, so that door is nearly in the mid
+    thresh_2 = 10;      % To align to the door, so that door is nearly in the mid
     thresh_3 = 5000;    % We are now in front of the door!
     thresh_orient = 1500;
-    thresh_4 = 20;
 
     counter = 0;
     %Step1:  Turn around and move forward for the door!
@@ -92,7 +91,7 @@ function hw5_part2(serPort)
             continue;       % We are now closer to the door! Move forword!
         else                % We are on the wrong direction, re-align
             while abs(center-mid) > thresh_2
-                if abs(last_center - center) > thresh_4
+                if abs(last_center - center) > 30
                     display('reflection');
                     break;
                 end
@@ -106,28 +105,21 @@ function hw5_part2(serPort)
                 img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
                 [area, center] = process_img_gray(img, l, h);
                 last_area = area;
-                last_center = center;
-                display(abs(last_center-center))
             end
         end
     end 
     % We are now here to knock on the door and try to path it!
-    i=0;
-    while i<2
+    while true
         display('part5')
         [BumpRight BumpLeft WheDropRight WheDropLeft WheDropCaster ...
         BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
         bumped= BumpRight || BumpLeft || BumpFront;
         if bumped
             travelDist (serPort, move_speed, - move_distance * 5);
-            i = i+1;
         else
             travelDist (serPort, move_speed, move_distance);
         end
     end
-    BeepRoomba(serPort);
-    pause(5);
-    travelDist (serPort, move_speed, move_distance * 10);
     
 end
 
