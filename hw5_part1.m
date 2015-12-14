@@ -9,9 +9,8 @@ function hw5_part1(serPort)
     h = ceil(size(img, 1)/sample_rate);
     l = ceil(size(img, 2)/sample_rate);
     
-
     angle_unit = 5;
-    move_speed = 0.3;
+    move_speed = 0.1;
     mid = ceil(l/2/sample_rate);
     
     % initialize
@@ -28,29 +27,30 @@ function hw5_part1(serPort)
             continue;
         end
         display(area);
-        if abs(area-last_area) > last_area/8
-            
+        display(last_area);
+        
+        if abs(area-last_area) > 100          
             if area > last_area
-%                 travelDist (serPort, move_speed, 0.01);
+                 travelDist (serPort, move_speed, -0.01);
                 display('move back');
             else
-%                 turnAngle (serPort, move_speed, -0.01);
+                 travelDist (serPort, move_speed, 0.01);
                 display('move forward');
             end
         end
-        display(center)
+        display(center);
+        display(mid);
         if abs(center-mid) > 10
-           
             if center > mid
-%                 turnAngle (serPort, 0.2, -angle_unit);
+                 turnAngle (serPort, 0.05, -angle_unit);
                 display('turn right');
             else
-%                 turnAngle (serPort, 0.2, angle_unit);
+                 turnAngle (serPort, 0.05, angle_unit);
                 display('turn left');
             end
         end    
-        pause(0.5);
-        last_area = area;
+        pause(0.01);
+%        last_area = area;
 %         last_center = center;
     end
 end
@@ -112,7 +112,7 @@ function [area, center] = process_img(img, c, l, h, sample_rate)
     end
     result = zeros(h, l);
     result(CC.PixelIdxList{idx}) = 1;
-    center = uint8(sum(result * (1:l)') /area);
+    center = ceil(sum(result * (1:l)') /area);
     subplot(2,1,1), imshow(img)
     subplot(2,1,2), imshow(result)
 
