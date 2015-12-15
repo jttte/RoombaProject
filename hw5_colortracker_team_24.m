@@ -13,10 +13,10 @@
 %
 % Command:
 %    >> serPort = RoombaInit_mac ('usbserial');
-%    >> hw5_part1(serPort);
+%    >> hw5_colortracker_team_24(serPort);
 % If you wish to downsample input image to further speed up processing, 
 % please change the sample_rate up in line 22.
-function hw5_part1(serPort)
+function hw5_colortracker_team_24(serPort)
 
     close all; clc;
     sample_rate = 1;
@@ -121,7 +121,7 @@ function [area, center] = process_img(img, c, l, h, sample_rate)
     
     % find the biggest CC
     [area,idx] = max(numPixels);
-    if area == 0
+    if size(area, 2) == 0
         center = 0;
         return
     end
