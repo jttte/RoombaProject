@@ -30,18 +30,18 @@ function hw5_doortracker_team_24(serPort)
     mid = ceil(l/2);
 
     % initialize
-    thresh_1 = 4000;     % area below this value means door not found
+    thresh_1 = 3500;     % area below this value means door not found
     move_distance = 0.1; % no door in sight, just move forwards
     thresh_2 = 5;      % To align to the door, so that door is nearly in the mid
     thresh_3 = 5000;    % We are now in front of the door!
-    thresh_orient = 1500;
+    thresh_orient = 1700;
     thresh_4 = 20;
 
     counter = 0;
     %Step1:  Turn around and move forward for the door!
     while true
         display('Part1');
-            if counter < (360/(angle_unit*4)-6)
+            if counter < (360/(angle_unit*4)-3)
                 img = read_img();
 %                 [area, center] = process_img(img, c, l, h, sample_rate);
                 [area, center] = process_img_gray(img, l, h);
@@ -61,11 +61,24 @@ function hw5_doortracker_team_24(serPort)
                     total_area = get_object_area(img, l, h);
                     display(total_area)
                     if total_area > thresh_orient
+%                         [area, center] = process_img_gray(img, l, h);
+%                         while abs(center-mid) > thresh_2
+%                             display('part2')
+%                             if center > mid
+%                                  turnAngle (serPort, 0.05, -angle_unit);
+%                                 display('turn right');
+%                             else
+%                                  turnAngle (serPort, 0.05, angle_unit);
+%                                 display('turn left');
+%                             end
+%                                 img = read_img();
+%                                 [area, center] = process_img_gray(img, l, h);
+%                         end          
                         break;
                     end
                     turnAngle (serPort, 0.05, -angle_unit);
                 end
-                travelDist (serPort, move_speed, move_distance*8);
+                travelDist (serPort, move_speed, move_distance*6);
                 counter = 0;
             end                
     end
@@ -89,7 +102,8 @@ function hw5_doortracker_team_24(serPort)
     % Step3:  Move towards the door and justify the direction along the motion!
     last_area = area;
     last_center = center;
-    while true
+    flag = true;
+    while flag
         display('part 4');
         travelDist (serPort, move_speed, move_distance);
         img = read_img();
@@ -105,7 +119,7 @@ function hw5_doortracker_team_24(serPort)
             while abs(center-mid) > thresh_2
                 if abs(last_center - center) > thresh_4
                     display('reflection');
-                    break;
+                    flag = false;
                 end
                 if center > mid
                     turnAngle (serPort, 0.05, -angle_unit);
@@ -122,7 +136,7 @@ function hw5_doortracker_team_24(serPort)
             end
         end
     end
-    
+
     % We are now here to knock on the door and try to path it!
     i=0;
     while i<2
@@ -200,7 +214,7 @@ function [area, center] = process_img_gray(img, l, h)
 end
 
 function img = read_img()
-    img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
+    img = imread('http://192.168.0.103/snapshot.cgi?user=admin&pwd=');
 end
 
 % function layer = mydownsample(img, sample_rate)

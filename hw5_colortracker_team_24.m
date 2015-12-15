@@ -20,7 +20,7 @@ function hw5_colortracker_team_24(serPort)
 
     close all; clc;
     sample_rate = 1;
-    img = imread('http://192.168.0.103/snapshot.cgi?user=admin&pwd=');
+    img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
     
     
     h = ceil(size(img, 1)/sample_rate);
@@ -38,7 +38,7 @@ function hw5_colortracker_team_24(serPort)
     
     last_area = area;
     while true
-        img = imread('http://192.168.0.103/snapshot.cgi?user=admin&pwd=');
+        img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
         [area, center] = process_img(img, c, l, h, sample_rate);
         if area == 0
             continue;
