@@ -33,4 +33,11 @@ d) Details:
 
 5. Dijkstra algorithm: Please refer to dijkstra.m
 
-6. It takes about 5 seconds to run our program :( Please be patient. Thank you!
+6. graph annotation:
+   We put text labels at start and goal.
+   Safe path is marked in red.
+   Original obstacles are marked in cyan.
+   Grown obstacles are marked in black.
+   Visibility graph is marked in blue. (We also remove edges that are too close to wall from visibility graph.)
+
+7. It takes about 5 seconds to run our program :( Please be patient. Thank you!

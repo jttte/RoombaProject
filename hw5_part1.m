@@ -1,8 +1,25 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COMS W4733 Computational Aspects of Robotics 2015
+%
+% Homework 5 part1
+%
+% Team number: 24
+% Team leader: Chia-Jung Lin (cl3295)
+% Team members: Cheng Zhang (cz2398), Ming-Ching Chu (mc4107)
+% 
+%
+% Input:
+% serPort - Serial port object, used for communicating over bluetooth
+%
+% Command:
+%    >> serPort = RoombaInit_mac ('usbserial');
+%    >> hw5_part1(serPort);
+% If you wish to downsample input image to further speed up processing, 
+% please change the sample_rate up in line 22.
 function hw5_part1(serPort)
 
     close all; clc;
     sample_rate = 1;
-%     img = imread('hallway_images/im2.png');
     img = imread('http://192.168.0.103/snapshot.cgi?user=admin&pwd=');
     
     
@@ -50,8 +67,6 @@ function hw5_part1(serPort)
             end
         end    
         pause(0.01);
-%        last_area = area;
-%         last_center = center;
     end
 end
 
@@ -59,22 +74,22 @@ end
 function [hue, area, center] = initialize_img_prop(img, x, y, l, h, sample_rate)
     new_img = zeros(h, l, 3);
     
-    tic
+%     tic
     new_img(:,:,1) = gaussfilt(mydownsample(img(:,:,1), sample_rate), 2);
     new_img(:,:,2) = gaussfilt(mydownsample(img(:,:,2), sample_rate), 2);
     new_img(:,:,3) = gaussfilt(mydownsample(img(:,:,3), sample_rate), 2);
-    toc
+%     toc
     
     hsv_img = rgb2hsv(new_img);
     
-    tic
+%     tic
     x = ceil(x/sample_rate);
     y = ceil(y/sample_rate);
     hue = hsv_img(x, y, 1);
     combined_mask = hsv_img(:,:,1) < hue + 0.06 & hsv_img(:,:,1) > hue - 0.06;
-    toc
+%     toc
     
-    tic
+%     tic
     % erode then label region
     L = bwlabel(imerode(combined_mask, [0 1 0; 1 1 1; 0 1 0]));
     % find label of the chosen region
@@ -84,7 +99,7 @@ function [hue, area, center] = initialize_img_prop(img, x, y, l, h, sample_rate)
     imshow(target_mask);
     area = sum(sum(target_mask));
     center = uint8(sum(target_mask * (1:l)') /area);
-    toc
+%     toc
 end
 
 function [area, center] = process_img(img, c, l, h, sample_rate)

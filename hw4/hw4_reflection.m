@@ -3,7 +3,7 @@ function hw4()
     global coordinates
     global dimension
     
-    fileID = fopen('hw4_world_and_obstacles_convex.txt','r');
+    fileID = fopen('hw4_world_and_obstacles_convex_test.txt','r');
     formatSpec = '%f';
     coor_list = fscanf(fileID,formatSpec);
     N = coor_list(1);

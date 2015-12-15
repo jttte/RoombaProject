@@ -11,7 +11,7 @@ function hw4()
     
     E_obstacles = [];
     n_total_vertices = 0;
-    fileID = fopen('hw4_world_and_obstacles_convex_copy.txt','r');
+    fileID = fopen('hw4_world_and_obstacles_convex_test.txt','r');
     formatSpec = '%f';
     coor_list = fscanf(fileID,formatSpec);
     N = coor_list(1)-1;

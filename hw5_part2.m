@@ -1,20 +1,35 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COMS W4733 Computational Aspects of Robotics 2015
+%
+% Homework 5 part2
+%
+% Team number: 24
+% Team leader: Chia-Jung Lin (cl3295)
+% Team members: Cheng Zhang (cz2398), Ming-Ching Chu (mc4107)
+%
+% Input:
+% serPort - Serial port object, used for communicating over bluetooth
+%
+% Command:
+%    >> serPort = RoombaInit_mac ('usbserial');
+%    >> hw5_part2(serPort);
+% Since we only use low-level vision process techniques, we recommand you 
+% to set input image to the lowest resolution. The transmission can be 
+% smoother this way. If you still have problem retrieving images, try
+% connect camera to router using cable at all time.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function hw5_part2(serPort)
     close all; clc;
-    sample_rate = 1;
-    img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
+    img = read_img();
 
-    h = ceil(size(img, 1)/sample_rate);
-    l = ceil(size(img, 2)/sample_rate);
+    h = size(img, 1);
+    l = size(img, 2);
     angle_unit = 2;
     move_speed = 0.1;
-    mid = ceil(l/2/sample_rate);
+    mid = ceil(l/2);
 
     % initialize
-%     fig = imshow(img);
-%     [y,x] = ginput(1)
-%     [c, area, center] = initialize_img_prop(img, x, y, l, h, sample_rate);
-%     c = 0.4709;
-    
     thresh_1 = 4000;     % area below this value means door not found
     move_distance = 0.1; % no door in sight, just move forwards
     thresh_2 = 5;      % To align to the door, so that door is nearly in the mid
@@ -24,12 +39,10 @@ function hw5_part2(serPort)
 
     counter = 0;
     %Step1:  Turn around and move forward for the door!
-    max_counter = 0;
-    max_area = 0;
     while true
         display('Part1');
             if counter < (360/(angle_unit*4)-6)
-                img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
+                img = read_img();
 %                 [area, center] = process_img(img, c, l, h, sample_rate);
                 [area, center] = process_img_gray(img, l, h);
                 display(area)
@@ -38,16 +51,12 @@ function hw5_part2(serPort)
                     counter = counter + 1;
                 else                      
                     break;
-%                     if area > max_area
-%                         max_area = area;
-%                         max_counter = counter;
-%                     end
                 end
             else
-                % re-orient
+                % could not find object that is salient enough
+                % turn to a prominent orientation and move forward
                 while true
-                    img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
-%                 [area, center] = process_img(img, c, l, h, sample_rate);
+                    img = read_img();
                     total_area = get_object_area(img, l, h);
                     display(total_area)
                     if total_area > thresh_orient
@@ -55,11 +64,11 @@ function hw5_part2(serPort)
                     end
                     turnAngle (serPort, 0.05, -angle_unit);
                 end
-%                 turnAngle (serPort, 0.05, -angle_unit * max_counter);
                 travelDist (serPort, move_speed, move_distance*8);
                 counter = 0;
             end                
     end
+    
     % Step2:   Now we find a door! We need to align to it.
     while abs(center-mid) > thresh_2
         display('part2')
@@ -70,18 +79,19 @@ function hw5_part2(serPort)
              turnAngle (serPort, 0.05, angle_unit);
             display('turn left');
         end
-        img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
+        img = read_img();
         [area, center] = process_img_gray(img, l, h);
     end 
     display(area);
     display(center);
+    
     % Step3:  Move towards the door and justify the direction along the motion!
     last_area = area;
     last_center = center;
     while true
         display('part 4');
         travelDist (serPort, move_speed, move_distance);
-        img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
+        img = read_img();
         [area, center] = process_img_gray(img, l, h);
         display(area);
         if area > thresh_3
@@ -103,14 +113,15 @@ function hw5_part2(serPort)
                     turnAngle (serPort, 0.05, angle_unit);
                     display('turn left');
                 end
-                img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
+                img = read_img();
                 [area, center] = process_img_gray(img, l, h);
                 last_area = area;
                 last_center = center;
                 display(abs(last_center-center))
             end
         end
-    end 
+    end
+    
     % We are now here to knock on the door and try to path it!
     i=0;
     while i<2
@@ -139,7 +150,6 @@ function total_area = get_object_area(img, l, h)
     cutoff_mask(1:floor(h/3), :) = 1;
     
     level = graythresh(gray_img);
-%     gray_mask = gray_img < level;
     gray_mask = ~im2bw(gray_img, level);
     combined_mask = cutoff_mask & gray_mask;
     
@@ -186,93 +196,32 @@ function [area, center] = process_img_gray(img, l, h)
     
 end
 
-function [hue, area, center] = initialize_img_prop(img, x, y, l, h, sample_rate)
-    new_img = zeros(h, l, 3);
-    
-    tic
-    new_img(:,:,1) = gaussfilt(mydownsample(img(:,:,1), sample_rate), 2);
-    new_img(:,:,2) = gaussfilt(mydownsample(img(:,:,2), sample_rate), 2);
-    new_img(:,:,3) = gaussfilt(mydownsample(img(:,:,3), sample_rate), 2);
-    toc
-    
-    gray_img = rgb2gray(new_img);
-    hsv_img = rgb2hsv(new_img);
-    
-    tic
-    x = ceil(x/sample_rate);
-    y = ceil(y/sample_rate);
-    hue = hsv_img(x, y, 1);
-    hue_mask = hsv_img(:,:,1) < hue + 0.06 & hsv_img(:,:,1) > hue - 0.06;
-    gray_mask = gray_img < 128;
-    combined_mask = hue_mask & gray_mask;
-    toc
-    
-    tic
-    % erode then label region
-    L = bwlabel(imerode(combined_mask, [0 1 0; 1 1 1; 0 1 0]));
-    % find label of the chosen region
-    lable = L(x, y);
-    target_mask = L == lable;
-    figure,
-    imshow(target_mask);
-    area = sum(sum(target_mask));
-    center = uint8(sum(target_mask * (1:l)') /area);
-    toc
+function img = read_img()
+    img = imread('http://192.168.0.102/snapshot.cgi?user=admin&pwd=');
 end
 
-function [area, center] = process_img(img, c, l, h, sample_rate)
-    threshold = 0.03;
-    new_img(:,:,1) = gaussfilt(mydownsample(img(:,:,1), sample_rate), 2);
-    new_img(:,:,2) = gaussfilt(mydownsample(img(:,:,2), sample_rate), 2);
-    new_img(:,:,3) = gaussfilt(mydownsample(img(:,:,3), sample_rate), 2);
-    
-    hsv_img = rgb2hsv(new_img);
-    
-    combined_mask = hsv_img(:,:,1) < c + threshold & hsv_img(:,:,1) > c - threshold;
-
-    % erode then label region
-    L = imerode(combined_mask, [0 1 0; 1 1 1; 0 1 0]);
-    
-    % connected components
-    CC = bwconncomp(L);
-    numPixels = cellfun(@numel,CC.PixelIdxList);
-    
-    % find the biggest CC
-    [area,idx] = max(numPixels);
-    if area == 0
-        center = 0;
-        return
-    end
-    result = zeros(h, l);
-    result(CC.PixelIdxList{idx}) = 1;
-    center = ceil(sum(result * (1:l)') /area);
-    subplot(2,1,1), imshow(img)
-    subplot(2,1,2), imshow(result)
-
-end
-
-function layer = mydownsample(img, sample_rate)
-    img = (downsample(img', sample_rate))'; %down sample column
-    layer = downsample(img, sample_rate); %down sample row
-        
-end
-
-function smim = gaussfilt(im, sigma)
- 
-    assert(ndims(im) == 2, 'Image must be greyscale');
-    
-    % If needed convert im to double
-    if ~strcmp(class(im),'double')
-        im = double(im);  
-    end
-    
-    sze = ceil(6*sigma);  
-    if ~mod(sze,2)    % Ensure filter size is odd
-        sze = sze+1;
-    end
-    sze = max(sze,1); % and make sure it is at least 1
-    
-    h = fspecial('gaussian', [sze sze], sigma);
-
-    smim = filter2(h, im);
-end
+% function layer = mydownsample(img, sample_rate)
+%     img = (downsample(img', sample_rate))'; %down sample column
+%     layer = downsample(img, sample_rate); %down sample row
+%         
+% end
+% 
+% function smim = gaussfilt(im, sigma)
+%  
+%     assert(ndims(im) == 2, 'Image must be greyscale');
+%     
+%     % If needed convert im to double
+%     if ~strcmp(class(im),'double')
+%         im = double(im);  
+%     end
+%     
+%     sze = ceil(6*sigma);  
+%     if ~mod(sze,2)    % Ensure filter size is odd
+%         sze = sze+1;
+%     end
+%     sze = max(sze,1); % and make sure it is at least 1
+%     
+%     h = fspecial('gaussian', [sze sze], sigma);
+% 
+%     smim = filter2(h, im);
+% end
